@@ -39,6 +39,7 @@ import meetingOrganization from './modules/meeting/organization'
 import meetingRoom from './modules/meeting/room'
 import meetingRoomEquipment from './modules/meeting/room-equipment'
 import meetingRoomSeat from './modules/meeting/room-seat'
+import meetingSeatAssignment from './modules/meeting/seat-assignment'
 import meetingCountesy from './modules/meeting/countesy'
 import meetingPosition from './modules/meeting/position'
 
@@ -77,6 +78,7 @@ export default createStore({
     meetingRoom ,
     meetingRoomEquipment ,
     meetingRoomSeat ,
+    meetingSeatAssignment ,
     meetingOrganization ,
     meetingCountesy ,
     meetingPosition

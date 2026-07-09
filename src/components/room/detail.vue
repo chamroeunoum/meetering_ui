@@ -5,11 +5,8 @@
       <n-button size="small" quaternary @click="$router.push('/rooms')">
         <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M12.707 5.293a1 1 0 0 1 0 1.414L9.414 10l3.293 3.293a1 1 0 0 1-1.414 1.414l-4-4a1 1 0 0 1 0-1.414l4-4a1 1 0 0 1 1.414 0z" fill="currentColor"/></svg>
       </n-button>
-      <div class="font-moul text-lg text-gray-800">{{ room.name }}</div>
+      <div class="font-moul text-lg ">{{ room.name }}</div>
       <n-tag :type="room.active ? 'success' : 'error'" size="small" round class="cursor-pointer" @click="toggleRoomActive">{{ room.active ? 'សកម្ម' : 'អសកម្ម' }}</n-tag>
-      <n-upload accept="image/*" :show-file-list="false" :custom-request="uploadRoomPhoto" class="ml-auto">
-        <n-button size="tiny" quaternary>📷 រូបថត</n-button>
-      </n-upload>
     </div>
 
     <!-- Tabs -->
@@ -17,17 +14,17 @@
       <n-tab-pane name="equipment" tab="ឧបករណ៍">
         <div class="mt-2">
           <div class="flex justify-between items-center mb-3">
-            <div class="text-xs text-gray-500">សរុប {{ equipment.length }} ឧបករណ៍</div>
+            <div class="text-xs text-gray-400">សរុប {{ equipment.length }} ឧបករណ៍</div>
             <n-button size="tiny" type="success" @click="openEquipModal()">+ បន្ថែម</n-button>
           </div>
           <div v-if="equipLoading" class="flex justify-center py-10"><n-spin size="small" /></div>
           <div v-else-if="equipment.length === 0" class="text-center text-gray-400 py-10 text-sm">មិនមានឧបករណ៍នៅឡើយទេ។</div>
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            <div v-for="eq in equipment" :key="eq.id" class="bg-white border rounded-lg p-3 hover:shadow transition-shadow">
+            <div v-for="eq in equipment" :key="eq.id" class="bg-card border border-default rounded-lg p-3 hover:shadow transition-shadow">
               <div class="flex justify-between items-start">
                 <div>
                   <div class="font-semibold text-sm">{{ eq.name }} <span class="text-xs text-gray-400 font-mono ml-1">{{ eq.equipment_code }}</span></div>
-                  <div class="text-xs text-gray-500">{{ eq.brand_model || '—' }} | ចំនួន: {{ eq.quantity }}</div>
+                  <div class="text-xs text-gray-400">{{ eq.brand_model || '—' }} | ចំនួន: {{ eq.quantity }}</div>
                   <div class="text-xs text-gray-400" v-if="eq.serial_number">SN: {{ eq.serial_number }}</div>
                 </div>
                 <div class="flex gap-1">
@@ -37,7 +34,7 @@
                   </n-tag>
                 </div>
               </div>
-              <div class="text-xs text-gray-500 mt-1" v-if="eq.description">{{ eq.description }}</div>
+              <div class="text-xs text-gray-400 mt-1" v-if="eq.description">{{ eq.description }}</div>
               <div class="flex justify-end gap-1 mt-2">
                 <n-button size="tiny" quaternary @click="editEquipment(eq)"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="currentColor"/></svg></n-button>
                 <n-button size="tiny" quaternary type="error" @click="deleteEquipment(eq)"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12z" fill="currentColor"/></svg></n-button>
@@ -56,6 +53,14 @@
             @delete="handleSeatDelete"
             @batch-add="handleSeatBatchAdd"
             @clear="handleSeatClear" />
+        </div>
+      </n-tab-pane>
+
+      <n-tab-pane name="photo" tab="រូបភាព">
+        <div class="mt-2">
+          <n-upload accept="image/*" :show-file-list="false" :custom-request="uploadRoomPhoto" class="ml-auto">
+            <n-button size="tiny" quaternary>📷 រូបថត</n-button>
+          </n-upload>
         </div>
       </n-tab-pane>
     </n-tabs>

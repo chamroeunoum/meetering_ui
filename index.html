@@ -7,6 +7,15 @@
     <title>ប្រព័ន្ធកិច្ចប្រជុំគណៈរដ្ឋមន្ត្រី</title>
   </head>
   <body>
+    <!-- Blocking script: apply dark class before Vue renders (prevents white flash) -->
+    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('app-theme');
+          if (theme === 'dark') document.documentElement.classList.add('dark');
+        } catch(e) {}
+      })();
+    </script>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
   </body>

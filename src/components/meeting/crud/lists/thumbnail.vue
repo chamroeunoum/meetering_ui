@@ -1,7 +1,24 @@
 <template>
   <div class="relative">
+    <!-- Top bar -->
+    <div class="flex title-bar border-b border-gray-200 h-10">
+      <div class="flex w-64 h-8 title">
+        <svg class="flex-none w-8 h-8 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/><path d="M3 9V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4"/><path d="M8 3v4"/><path d="M16 3v4"/><path d="M8 13h.01"/><path d="M12 13h.01"/><path d="M16 13h.01"/><path d="M8 17h.01"/><path d="M12 17h.01"/><path d="M16 17h.01"/></svg>
+        <div class="font-moul ml-2 h-8 leading-9">កិច្ចប្រជុំ</div>
+      </div>
+      <div class="flex-grow flex flex-row-reverse gap-2">
+        <n-button type="success" size="small" @click="showCreateModal = true">
+          <template #icon>+</template> បន្ថែម
+        </n-button>
+        <div class="w-2/5 relative h-8">
+          <input type="text" @keypress.enter="fetchRooms(false)" v-model="search"
+            class="px-2 h-8 w-full rounded border border-gray-200 focus:border-blue-600"
+            placeholder="ស្វែងរក" />
+        </div>
+      </div>
+    </div>
     <!-- Table of crud -->
-    <div class="fixed left-0 top-12 right-0 bottom-12 vcb-table-panel">
+    <div class="fixed left-0 top-4 right-0 bottom-12 vcb-table-panel">
       <!-- <div class="vcb-meeting-timestamp flex flex-wrap justify-center items-center w-full mb-8 bg-white border border-gray-200 p-2" > -->
       <!-- <div class="p-1 px-4 rounded shadow-sm m-1 cursor-pointer duration-300 hover:border-yellow-300 hover:text-yellow-800 border border-gray-200" >១ ខែមុន</div>
         <div class="p-1 px-4 rounded shadow-sm m-1 cursor-pointer duration-300 hover:border-yellow-300 hover:text-yellow-800 border border-gray-200" >១ សប្ដាហ៍មុន</div>
@@ -71,7 +88,7 @@
           type="date" />
         </div> -->
       <!-- </div> -->
-      <Transition name="slide-fade">
+      <!-- <Transition name="slide-fade">
         <div
           v-if="viewMode==='grid' && Array.isArray(records) && records.length > 0"
           class="vcb-thumbnail mb-24"
@@ -223,19 +240,20 @@
             </div>
           </div>
         </div>
-      </Transition>
+      </Transition> -->
       <!-- Horizontal full-width layout -->
       <Transition name="slide-fade">
+        <!-- v-if="viewMode==='horizontal' && Array.isArray(records) && records.length > 0" -->
         <div
-          v-if="viewMode==='horizontal' && Array.isArray(records) && records.length > 0"
+          v-if="Array.isArray(records) && records.length > 0"
           class="vcb-horizontal mb-24 px-2"
         >
-          <div v-for="(record, index) in records" :key="'h'+index" class="item-h">
+          <div v-for="(record, index) in records" :key="'h'+index" class="item-h bg-card rounded-lg border border-default p-4">
             <router-link :to="'/meetings/' + record.id" class="block">
-              <div class="content-h bg-white border rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200">
+              <div class="content-h">
                 <!-- Line 1: Objective (full width, bold, big, gray) -->
                 <div class="w-full mb-2 text-left">
-                  <pre class="font-bold text-gray-700 text-base text-wrap leading-6" v-html="applyTagMark(record.objective)"></pre>
+                  <pre class="font-bold text-base text-wrap leading-6" v-html="applyTagMark(record.objective)"></pre>
                 </div>
                 <!-- Line 2: All info inline -->
                 <div class="w-full flex flex-wrap items-center gap-x-4 gap-y-1 text-xxs text-gray-500">
@@ -516,9 +534,9 @@
       </div>
     </Transition>
     <!-- Top action panel of crud -->
-    <div
+    <!--<div
       class="fixed left-0 top-0 right-0 bg-white flex title-bar border-b border-gray-200 p-2 h-12"
-    >
+     >
       <div class="flex w-64 h-8 title">
         <svg
           class="flex-none w-8 h-8 text-blue-600"
@@ -654,7 +672,7 @@
           </n-tooltip>
         </div>
       </div>
-    </div>
+    </div> -->
     <!-- Form create account -->
     <create-form
       v-bind:model="model"
@@ -1164,7 +1182,7 @@ export default {
   /* min-height: 200px;  */
 }
 .vcb-thumbnail .item .content .image {
-  @apply border rounded-full border-gray-200 p-2 w-20 h-20 flex-none mx-auto overflow-hidden bg-white;
+  @apply border rounded-full p-2 w-20 h-20 flex-none mx-auto overflow-hidden bg-white;
 }
 .vcb-thumbnail .item .content .image-stick-top-left {
   @apply absolute left-2 -top-5 border rounded-full border-gray-200 p-2 w-10 h-10 flex-none mx-auto overflow-hidden bg-white z-50;
@@ -1186,12 +1204,7 @@ export default {
 }
 /* Horizontal layout */
 .vcb-horizontal .item-h {
-  @apply mb-2;
+  @apply mb-2 ;
 }
-.vcb-horizontal .item-h .content-h {
-  @apply duration-300;
-}
-.vcb-horizontal .item-h .content-h:hover {
-  @apply border-blue-400 shadow-md;
-}
+
 </style>

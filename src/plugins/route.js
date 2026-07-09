@@ -86,6 +86,7 @@ import DraftTimelineComponent from '../components/meeting/crud/lists/timeline.vu
 
 // Error page
 import Page404 from '../components/errors/404.vue'
+import AuthenticatedLayout from '../layouts/authenticated.vue'
 
 // ─── Route Set Builder ─────────────────────────────────────────────────────
 
@@ -126,224 +127,206 @@ function getAuthenticatedRoutes() {
       redirect: () => '/dashboard',
     },
 
-    // ── Attendants (no-shift mode) ─────────────────────────────────────
+    // ── Authenticated Layout (sidebar wrapper) ──────────────────────────
     {
-      name: 'AttendantNoShift',
-      path: '/attendants',
-      component: AttendantNoShiftComponent,
-      meta: {
-        transition: 'slide-right',
-        requiresAuth: true,
-      },
+      path: '/',
+      component: AuthenticatedLayout,
       children: [
+        // ── Dashboard ──────────────────────────────────────────────────
         {
-          name: 'AttendantNoShiftToday',
-          path: '',
-          component: AttendantNoShiftDayComponent,
+          name: 'Dashboard',
+          path: 'dashboard',
+          component: DashboardComponent,
+          children: [
+            {
+              name: 'DashboardWidget',
+              path: '',
+              component: DashboardWidget,
+            },
+          ],
+        },
+
+        // ── Meetings ───────────────────────────────────────────────────
+        {
+          name: 'Meeting',
+          path: 'meetings',
+          component: MeetingComponent,
+          meta: { transition: 'slide-right', requiresAuth: true },
+          children: [
+            {
+              name: 'MeetingThumbnail',
+              path: '',
+              component: MeetingThumbnailComponent,
+            },
+            {
+              name: 'MeetingDetail',
+              path: ':id',
+              component: MeetingDetailComponent,
+            },
+            {
+              name: 'DraftViewer',
+              path: ':meeting_id/draft/:draft_id',
+              component: DraftViewerComponent,
+            },
+            {
+              name: 'DraftTimeline',
+              path: ':meeting_id/timeline',
+              component: DraftTimelineComponent,
+            },
+          ],
+        },
+
+        // ── Attendants ─────────────────────────────────────────────────
+        {
+          name: 'AttendantNoShift',
+          path: 'attendants',
+          component: AttendantNoShiftComponent,
+          meta: { transition: 'slide-right', requiresAuth: true },
+          children: [
+            {
+              name: 'AttendantNoShiftToday',
+              path: '',
+              component: AttendantNoShiftDayComponent,
+            },
+            {
+              name: 'AttendantNoShiftMonth',
+              path: 'month',
+              component: AttendantNoShiftListComponent,
+            },
+            {
+              name: 'AttendantNoShiftDay',
+              path: 'today',
+              component: AttendantNoShiftDayComponent,
+            },
+          ],
+        },
+
+        // ── Tasks ──────────────────────────────────────────────────────
+        {
+          name: 'Task',
+          path: 'tasks',
+          component: TaskComponent,
+          meta: { transition: 'slide-right', requiresAuth: true, is_admin: true },
+          children: [
+            {
+              name: 'TaskList',
+              path: '',
+              component: TaskListComponent,
+            },
+          ],
+        },
+
+        // ── Cards ──────────────────────────────────────────────────────
+        {
+          name: 'Card',
+          path: 'cards',
+          component: CardComponent,
+          meta: { transition: 'slide-right', requiresAuth: true, is_admin: true },
+          children: [
+            {
+              name: 'CardInfo',
+              path: '',
+              component: CardInfoComponent,
+            },
+          ],
+        },
+
+        // ── Rooms ──────────────────────────────────────────────────────
+        {
+          name: 'Room',
+          path: 'rooms',
+          component: RoomComponent,
+          meta: { transition: 'slide-right', requiresAuth: true },
+          children: [
+            {
+              name: 'RoomList',
+              path: '',
+              component: RoomListComponent,
+            },
+            {
+              name: 'RoomDetail',
+              path: ':id',
+              component: RoomDetailComponent,
+            },
+          ],
+        },
+
+        // ── Folders ────────────────────────────────────────────────────
+        {
+          name: 'Folder',
+          path: 'folders',
+          component: FolderComponent,
+          meta: { transition: 'slide-right', requiresAuth: true, is_admin: true },
+          children: [
+            {
+              name: 'FolderThumbnail',
+              path: '',
+              component: FolderThumbnailComponent,
+            },
+          ],
+        },
+
+        // ── Users ──────────────────────────────────────────────────────
+        {
+          name: 'User',
+          path: 'users',
+          component: UserComponent,
+          meta: { transition: 'slide-right', requiresAuth: true, is_admin: true },
+          children: [
+            {
+              name: 'UserList',
+              path: '',
+              component: UserListComponent,
+            },
+          ],
+        },
+
+        // ── User Profile ───────────────────────────────────────────────
+        {
+          name: 'UserProfile',
+          path: 'profile',
+          component: UserProfileComponent,
         },
         {
-          name: 'AttendantNoShiftMonth',
-          path: 'month',
-          component: AttendantNoShiftListComponent,
+          name: 'UserPasswordChange',
+          path: 'password/change',
+          component: PasswordChangeComponent,
+        },
+
+        // ── Welcome / TV Templates ─────────────────────────────────────
+        {
+          name: 'Welcome',
+          path: 'welcome',
+          component: WelcomeComponent,
         },
         {
-          name: 'AttendantNoShiftDay',
-          path: 'today',
-          component: AttendantNoShiftDayComponent,
+          name: 'ScheduleMeetingTV1',
+          path: 'tvtemplate1',
+          component: ScheduleMeetingTV1Component,
+        },
+        {
+          name: 'ScheduleMeetingTV2',
+          path: 'tvtemplate2',
+          component: ScheduleMeetingTV2Component,
+        },
+        {
+          name: 'ScheduleMeetingTV3',
+          path: 'tvtemplate3',
+          component: ScheduleMeetingTV3Component,
+        },
+        {
+          name: 'ScheduleMeetingTV4',
+          path: 'tvtemplate4',
+          component: ScheduleMeetingTV4Component,
+        },
+
+        // ── Officer Card ───────────────────────────────────────────────
+        {
+          name: 'OfficerCard',
+          path: 'officer/card/:id',
+          component: DetailCardComponent,
         },
       ],
-    },
-
-    // ── Meetings ───────────────────────────────────────────────────────
-    {
-      name: 'Meeting',
-      path: '/meetings',
-      component: MeetingComponent,
-      meta: {
-        transition: 'slide-right',
-        requiresAuth: true,
-      },
-      children: [
-        {
-          name: 'MeetingThumbnail',
-          path: '',
-          component: MeetingThumbnailComponent,
-        },
-        {
-          name: 'MeetingDetail',
-          path: ':id',
-          component: MeetingDetailComponent,
-        },
-        {
-          name: 'DraftViewer',
-          path: ':meeting_id/draft/:draft_id',
-          component: DraftViewerComponent,
-        },
-        {
-          name: 'DraftTimeline',
-          path: ':meeting_id/timeline',
-          component: DraftTimelineComponent,
-        },
-      ],
-    },
-
-    // ── Tasks ──────────────────────────────────────────────────────────
-    {
-      name: 'Task',
-      path: '/tasks',
-      component: TaskComponent,
-      meta: {
-        transition: 'slide-right',
-        requiresAuth: true,
-        is_admin: true,
-      },
-      children: [
-        {
-          name: 'TaskList',
-          path: '',
-          component: TaskListComponent,
-        },
-      ],
-    },
-
-    // ── Cards ──────────────────────────────────────────────────────────
-    {
-      name: 'Card',
-      path: '/cards',
-      component: CardComponent,
-      meta: {
-        transition: 'slide-right',
-        requiresAuth: true,
-        is_admin: true,
-      },
-      children: [
-        {
-          name: 'CardInfo',
-          path: '',
-          component: CardInfoComponent,
-        },
-      ],
-    },
-
-    // ── Rooms ──────────────────────────────────────────────────────────
-    {
-      name: 'Room',
-      path: '/rooms',
-      component: RoomComponent,
-      meta: {
-        transition: 'slide-right',
-        requiresAuth: true,
-      },
-      children: [
-        {
-          name: 'RoomList',
-          path: '',
-          component: RoomListComponent,
-        },
-        {
-          name: 'RoomDetail',
-          path: ':id',
-          component: RoomDetailComponent,
-        },
-      ],
-    },
-
-    // ── Folders ────────────────────────────────────────────────────────
-    {
-      name: 'Folder',
-      path: '/folders',
-      component: FolderComponent,
-      meta: {
-        transition: 'slide-right',
-        requiresAuth: true,
-        is_admin: true,
-      },
-      children: [
-        {
-          name: 'FolderThumbnail',
-          path: '',
-          component: FolderThumbnailComponent,
-        },
-      ],
-    },
-
-    // ── Dashboard ──────────────────────────────────────────────────────
-    {
-      name: 'Dashboard',
-      path: '/dashboard',
-      component: DashboardComponent,
-      children: [
-        {
-          name: 'DashboardWidget',
-          path: '',
-          component: DashboardWidget,
-        },
-      ],
-    },
-
-    // ── Users ──────────────────────────────────────────────────────────
-    {
-      name: 'User',
-      path: '/users',
-      component: UserComponent,
-      meta: {
-        transition: 'slide-right',
-        requiresAuth: true,
-        is_admin: true,
-      },
-      children: [
-        {
-          name: 'UserList',
-          path: '',
-          component: UserListComponent,
-        },
-      ],
-    },
-
-    // ── User Profile ───────────────────────────────────────────────────
-    {
-      name: 'UserProfile',
-      path: '/profile',
-      component: UserProfileComponent,
-    },
-    {
-      name: 'UserPasswordChange',
-      path: '/password/change',
-      component: PasswordChangeComponent,
-    },
-
-    // ── Welcome / TV Templates ─────────────────────────────────────────
-    {
-      name: 'Welcome',
-      path: '/welcome',
-      component: WelcomeComponent,
-    },
-    {
-      name: 'ScheduleMeetingTV1',
-      path: '/tvtemplate1',
-      component: ScheduleMeetingTV1Component,
-    },
-    {
-      name: 'ScheduleMeetingTV2',
-      path: '/tvtemplate2',
-      component: ScheduleMeetingTV2Component,
-    },
-    {
-      name: 'ScheduleMeetingTV3',
-      path: '/tvtemplate3',
-      component: ScheduleMeetingTV3Component,
-    },
-    {
-      name: 'ScheduleMeetingTV4',
-      path: '/tvtemplate4',
-      component: ScheduleMeetingTV4Component,
-    },
-
-    // ── Officer Card ───────────────────────────────────────────────────
-    {
-      name: 'OfficerCard',
-      path: '/officer/card/:id',
-      component: DetailCardComponent,
     },
 
     // ── 404 Catch-all ──────────────────────────────────────────────────

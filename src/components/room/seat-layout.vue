@@ -17,7 +17,7 @@
       <n-button size="small" type="primary" @click="autoLayout">បង្កើតកៅអីស្វ័យប្រវត្តិ</n-button>
     </div>
 
-    <div v-else class="layout-canvas bg-gray-50 border border-gray-200 rounded-lg p-6 overflow-auto" @click.self="handleCanvasClick">
+    <div v-else class="layout-canvas border border-default bg-gray-100 rounded-lg p-6 overflow-auto" @click.self="handleCanvasClick">
       <!-- Head table row -->
       <div v-if="headSeats.length > 0" class="mb-6">
         <div class="text-xs text-gray-500 mb-2 font-semibold">តុប្រធាន (Head Table)</div>

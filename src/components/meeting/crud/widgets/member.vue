@@ -226,20 +226,10 @@ export default {
       // validator: (val) => {}
     } , 
     record: {
-      type: Object ,
-      required: true ,
-      default: () => {
-        return reactive({
-          id: 0
-        })
-      },
-      // validator: (val) => {
-      //   for(var field in ['id','username','firstname','lastname','email','phone','password','active'] ){
-      //     if( !val.hasOwnProperty(field) ) return false
-      //   }
-      //   return true 
-      // }
+      type: Object,
+      default: () => ({ id: 0 }),
     },
+
     show: {
       type: Boolean ,
       default: false

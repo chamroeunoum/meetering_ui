@@ -237,6 +237,15 @@ const actions = {
     if (!m) throw new Error('Unknown doc type: ' + params.key)
     return await crud.upload(state.server + '/meetings/upload/' + m.upload, params.formData)
   },
+  async agendaList({state}, params) {
+    return await crud.list(state.server+'/agendas?'+new URLSearchParams(params))
+  },
+  async agendaSave({state}, params) {
+    return await crud.create(state.server+'/agendas/save', params)
+  },
+  async agendaDelete({state}, params) {
+    return await crud.delete(state.server+'/agendas/delete', params)
+  },
 }
 
 // mutations

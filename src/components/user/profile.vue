@@ -1,7 +1,25 @@
 <template>
-  <div class="w-full" >
-    <div class="grid grid-flow-row gap-2 mt-8 p-4 pb-16 md:grid-flow-col md:grid-cols-10 lg:grid-cols-12 " >
-      <div class="bg-white rounded-lg shadow p-4 md:col-span-3 lg:col-span-3 xl:col-span-2" >
+  <div class="w-full p-4" >
+    <div class="flex title-bar border-b border-gray-200 h-10">
+      <div class="flex w-64 h-8 title">
+        <svg class="flex-none w-8 h-8 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+        <div class="font-moul ml-2 h-8 leading-9">ព័ត៌មានផ្ទាល់ខ្លួន</div>
+      </div>
+      <div class="flex-grow flex flex-row-reverse gap-2">
+        <n-button type="success" size="small" @click="showCreateModal = true">
+          <template #icon>+</template> បន្ថែម
+        </n-button>
+        <div class="w-2/5 relative h-8">
+          <input type="text" @keypress.enter="fetchRooms(false)" v-model="search"
+            class="px-2 h-8 w-full rounded border border-gray-200 focus:border-blue-600"
+            placeholder="ស្វែងរក" />
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-flow-row gap-2 p-4 pb-16 md:grid-flow-col md:grid-cols-10 lg:grid-cols-12 " >
+      <div class="bg-card border border-default rounded-lg shadow p-4 md:col-span-3 lg:col-span-3 xl:col-span-2" >
         <Transition name="slide-fade" >
           <div v-if="transitionHelper"  class="w-full relative profileInformation">
             <div class="profileImage border-4 rounded-full border-gray-200 p-2 md:w-24 md:h-24 lg:w-32 lg:h-32 w-28 h-28 mx-auto bg-center bg-no-repeat bg-cover" :style=" 'background-image: url(' + localProfile +');' " ></div>
@@ -33,7 +51,7 @@
                   <template #trigger>
                     <div 
                       @click="clickUpload" 
-                      class="changeProfile p-1 m-1 border bg-white rounded-full md:w-6 md:h-6 lg:w-8 lg:h-8 w-8 h-8 border-gray-300 hidden" >
+                      class="changeProfile p-1 m-1 border  rounded-full md:w-6 md:h-6 lg:w-8 lg:h-8 w-8 h-8 border-default hidden" >
                       <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512"><path d="M350.54 148.68l-26.62-42.06C318.31 100.08 310.62 96 302 96h-92c-8.62 0-16.31 4.08-21.92 10.62l-26.62 42.06C155.85 155.23 148.62 160 140 160H80a32 32 0 0 0-32 32v192a32 32 0 0 0 32 32h352a32 32 0 0 0 32-32V192a32 32 0 0 0-32-32h-59c-8.65 0-16.85-4.77-22.46-11.32z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"></path><circle cx="256" cy="272" r="80" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="32"></circle><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M124 158v-22h-24v22"></path></svg>
                     </div>
                   </template>ប្ដូររូបភាពគណនី
@@ -42,7 +60,7 @@
                   <template #trigger>
                     <div
                       @click="uploadFiles" 
-                      class="saveProfile p-1 m-1 border bg-white rounded-full md:w-6 md:h-6 lg:w-8 lg:h-8  w-8 h-8 border-gray-300 hidden" >
+                      class="saveProfile p-1 m-1 border  rounded-full md:w-6 md:h-6 lg:w-8 lg:h-8  w-8 h-8 border-default hidden" >
                       <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5c0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4c0-2.05 1.53-3.76 3.56-3.97l1.07-.11l.5-.95A5.469 5.469 0 0 1 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5l1.53.11A2.98 2.98 0 0 1 22 15c0 1.65-1.35 3-3 3zM8 13h2.55v3h2.9v-3H16l-4-4z" fill="currentColor"></path></svg>
                     </div>
                   </template>រក្សារទុករូបភាពថ្មី
@@ -51,7 +69,7 @@
                   <template #trigger>
                     <div 
                       @click="$router.push('/password/change')"
-                      class="changePassword p-1 m-1 border bg-white rounded-full md:w-6 md:h-6 lg:w-8 lg:h-8 w-8 h-8 border-gray-300" >
+                      class="changePassword p-1 m-1 border rounded-full md:w-6 md:h-6 lg:w-8 lg:h-8 w-8 h-8 border-default" >
                       <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 16 16"><g fill="none"><path d="M11 6a1 1 0 1 0 0-2a1 1 0 0 0 0 2z" fill="currentColor"></path><path d="M7.5 12v-.5h1A.5.5 0 0 0 9 11v-1h1a4 4 0 1 0-3.838-2.87L2.292 11a1 1 0 0 0-.292.707V13a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-.5h1a.5.5 0 0 0 .5-.5zM7 6a3 3 0 1 1 3 3H8.5a.5.5 0 0 0-.5.5v1H7a.5.5 0 0 0-.5.5v.5h-1a.5.5 0 0 0-.5.5v1H3v-1.293l4.089-4.089a.5.5 0 0 0 .113-.534C7.072 6.748 7 6.384 7 6z" fill="currentColor"></path></g></svg>
                     </div>
                   </template>ប្ដូរពាក្យសម្ងាត់
@@ -61,7 +79,7 @@
           </div>
         </Transition>
       </div>
-      <div class="relative bg-white shadow rounded-lg p-4 md:col-span-7  lg:col-span-9 xl:col-span-10" >
+      <div class="bg-card relative  border border-default rounded-lg shadow p-4 md:col-span-7  lg:col-span-9 xl:col-span-10" >
         <n-tabs type="line" animated>
           <n-tab-pane name="background" tab="ព័តមានផ្ទាល់ខ្លួន">
             <div class="my-4 relative">
@@ -240,8 +258,7 @@
         </n-tabs>
       </div>
     </div>
-    <window-bar :title="model.title" :icon="1" />
-    <BottomMenuFloatItems />
+    <!-- <window-bar :title="model.title" :icon="1" /> -->
   </div>  
 </template>
 <script >
@@ -252,13 +269,11 @@ import { useRouter, useRoute } from 'vue-router'
 import Dock from '@components/widgets/Dock.vue'
 import { useMessage, useNotification } from 'naive-ui'
 import dateFormat from "dateformat"
-import BottomMenuFloatItems from '@components/menu/bottommenu-float-items.vue'
 import WindowBar from '@components/widgets/WindowBar.vue'
 
   export default {
     name: 'Profile' ,
     components: {
-      BottomMenuFloatItems ,
       Dock ,
       WindowBar
     },

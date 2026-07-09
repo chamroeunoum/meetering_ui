@@ -5,6 +5,15 @@
     </div>
     <div class="flex-grow h-12 leading-10 pt-1 text-md font-moul ml-2 text-left">{{ systemName }}</div>
     <div v-if="profilePicture!=null" class="flex-none h-12 leading-10 pt-1 font-moul text-right mr-4 invisible sm:visible md:visible lg:visible xl:visible" style=" overflow: hidden; white-space: nowrap; text-overflow: ellipsis;" >{{ username }}</div>
+    <!-- Theme toggle -->
+    <div class="flex-none mr-2">
+      <n-button circle size="small" quaternary @click="toggleTheme">
+        <template #icon>
+          <svg v-if="isDark" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 18a6 6 0 1 1 0-12a6 6 0 0 1 0 12zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636L5.636 7.05L3.515 4.93zM16.95 18.364l1.414-1.414l2.121 2.121l-1.414 1.414l-2.121-2.121zm2.121-14.85l1.414 1.415l-2.121 2.121l-1.414-1.414l2.121-2.121zM5.636 16.95l1.414 1.414l-2.121 2.121l-1.414-1.414l2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z" fill="currentColor"></path></g></svg>
+          <svg v-else class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12.056 3.6a1 1 0 0 0-.908-1.564C7.024 2.469 3.5 6.255 3.5 11a8.5 8.5 0 0 0 13.332 7.048a1 1 0 0 0-.4-1.916A6.5 6.5 0 0 1 8 11.5a6.491 6.491 0 0 1 4.056-7.9zM10 2c5.523 0 10 4.477 10 10c0 .958-.135 1.886-.387 2.768a1 1 0 0 1-1.707.603A8.5 8.5 0 0 0 8.629 5.293a1 1 0 0 1-.016-1.7A9.95 9.95 0 0 1 11.088 2H10z" fill="currentColor"></path></g></svg>
+        </template>
+      </n-button>
+    </div>
     <div class="flex-none ">
       <!-- User profile -->
       <div v-if="isLoggedIn" class="relative "  >
@@ -63,6 +72,7 @@ import { useRoute , useRouter } from 'vue-router'
 import { isAuth , getUser , authLogout } from './../../plugins/authentication'
 import { getRoutes } from './../../plugins/route'
 import { useDialog, useNotification, useMessage } from 'naive-ui'
+import { useTheme } from './../../composables/useTheme'
 export default {
   name: 'Topmenu'  ,
   setup(){
@@ -70,6 +80,7 @@ export default {
     const dialog = useDialog()
     const router = useRouter()
     const route = useRoute()
+    const { isDark, toggleTheme } = useTheme()
 
     const subMenuHelper = ref(false)
 
@@ -123,7 +134,9 @@ export default {
       isLoggedIn ,
       subMenuHelper ,
       systemName ,
-      logout
+      logout ,
+      isDark ,
+      toggleTheme ,
     }
   }
 }

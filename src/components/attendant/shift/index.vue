@@ -1,27 +1,12 @@
 <template>
-  <div class="w-full relative flex flex-wrap" >
-    <top-menu />
-    <!-- <router-view ></router-view> -->
+  <div>
     <router-view v-slot="{ Component }">
-      <transition :name="$route.meta.transition || 'fade'">
+      <Transition name="fade" mode="out-in">
         <component :is="Component" />
-      </transition>
+      </Transition>
     </router-view>
-    <div class="flex flex-wrap bottom-0 mx-auto w-full fixed z-40">
-      <FooterComponent />
-    </div>
   </div>
 </template>
-<script >
-import TopMenu from './../../menu/topmenu-floattop.vue'
-import FooterComponent from './../../footer/copy-right.vue'
-export default {
-  components: {
-    TopMenu ,
-    FooterComponent
-  } ,
-  setup(){
-
-  }
-}
+<script>
+export default {}
 </script>

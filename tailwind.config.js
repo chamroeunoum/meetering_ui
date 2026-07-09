@@ -8,8 +8,7 @@
  * @type {import('tailwindcss').Config}
  */
 export default {
-  /** UPDATED: Removed deprecated 'purge' option — 'content' replaces it in v3 */
-  darkMode: false, // or 'media' or 'class'
+  darkMode: false, // NaiveUI + CSS variables handle theming — not Tailwind
   content: [
     "./index.html",
     "./src/**/*.{vue,js,ts,jsx,tsx}", // UPDATED: added .vue to content glob so Tailwind scans SFCs

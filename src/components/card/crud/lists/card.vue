@@ -112,7 +112,6 @@
         </div>
       </div>
       <window-bar :title="model.title" :icon="2" />
-      <BottomMenuFloatItems />
     </div>  
 </template>
 <script >
@@ -120,7 +119,6 @@ import { isAuth, getUser , authLogout } from '@plugins/authentication.js'
 import { reactive, ref , computed , onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter, useRoute } from 'vue-router'
-import BottomMenuFloatItems from '@components/menu/bottommenu-float-items.vue'
 import Dock from '@components/widgets/Dock.vue'
 import { useMessage, useNotification } from 'naive-ui'
 import dateFormat from "dateformat"
@@ -132,7 +130,6 @@ import stampUrl from './../../../../assets/stamp.png'
     export default {
       name: 'Profile' ,
       components: {
-        BottomMenuFloatItems ,
         Dock ,
         WindowBar ,
         QrcodeVue ,

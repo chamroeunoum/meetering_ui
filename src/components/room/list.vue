@@ -12,7 +12,7 @@
         </n-button>
         <div class="w-2/5 relative h-8">
           <input type="text" @keypress.enter="fetchRooms(false)" v-model="search"
-            class="bg-gray-100 px-2 h-8 w-full rounded border border-gray-200 focus:border-blue-600"
+            class="px-2 h-8 w-full rounded border border-gray-200 focus:border-blue-600"
             placeholder="ស្វែងរក" />
         </div>
       </div>

@@ -1,14 +1,14 @@
 <template>
-  <div class="draft-viewer-page font-ktr bg-gray-50 min-h-screen flex flex-col">
+  <div class="draft-viewer-page font-ktr min-h-screen flex flex-col">
     <!-- Header -->
-    <div class="bg-white border-b border-gray-200 px-4 md:px-6 py-3 flex items-center justify-between flex-none">
+    <div class="border-b border-gray-200 px-4 md:px-6 py-3 flex items-center justify-between flex-none">
       <div class="flex items-center space-x-3 min-w-0">
-        <router-link :to="{name:'MeetingDetail',params:{id:meetingId}}" class="flex-none text-gray-400 hover:text-blue-500 transition-colors">
+        <router-link :to="{name:'MeetingDetail',params:{id:meetingId}}" class="flex-none text-blue-500 transition-colors">
           <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M10.295 19.716a1 1 0 0 0 1.404-1.424l-5.37-5.292h13.67a1 1 0 0 0 0-2H6.336L11.7 5.707a1 1 0 0 0-1.404-1.424l-6.924 6.822a1.25 1.25 0 0 0 0 1.79l6.924 6.822z" fill="currentColor"></path></g></svg>
         </router-link>
         <div class="min-w-0">
-          <h1 class="font-moul text-lg text-gray-800 truncate">{{ draft.title || 'សេចក្តីព្រាង' }}</h1>
-          <div class="flex items-center space-x-2 text-xs text-gray-500">
+          <h1 class="font-moul text-lg truncate">{{ draft.title || 'សេចក្តីព្រាង' }}</h1>
+          <div class="flex items-center space-x-2 text-xs ">
             <span class="px-2 py-0.5 rounded-full font-bold" :class="statusClass">{{ statusLabel }}</span>
             <span v-if="draft.version_number">v{{ draft.version_number }}</span>
             <span v-if="draft.regulator">{{ draft.regulator }}</span>

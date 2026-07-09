@@ -28,7 +28,6 @@
     </div>
     <!-- Title of crud -->
     <window-bar :title="'ប្ដូរពាក្យសម្ងាត់'" :icon="0" />
-    <BottomMenuFloatItems />
   </div>
 </template>
 <script >
@@ -37,17 +36,13 @@ import { reactive , ref , computed } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { useNotification } from 'naive-ui'
-import TopMenu from './../menu/topmenu-floattop.vue'
 import FooterComponent from './../footer/copy-right.vue'
-import BottomMenuFloatItems from '@components/menu/bottommenu-float-items.vue'
 import WindowBar from '@components/widgets/WindowBar.vue'
 
   export default {
     name: 'Profile' ,
     components: {
-      BottomMenuFloatItems ,
       // FooterComponent ,
-      TopMenu ,
       WindowBar
     },
     setup(){
