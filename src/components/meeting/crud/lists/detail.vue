@@ -29,6 +29,12 @@
               <n-button size="tiny" quaternary @click="showEditModal = true" class="!p-1">
                 <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </n-button>
+              <n-button size="tiny" :type="record.active ? 'warning' : 'primary'" @click="togglePublish(record)" class="!p-1">
+                <template #icon>
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                </template>
+                <span class="text-xs">{{ record.active ? 'ឈប់ផ្សាយ' : 'ផ្សាយ' }}</span>
+              </n-button>
               <span v-if="record.type" class="inline-block px-3 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-700 border border-blue-200">{{ record.type.name }}</span>
             </div>
           </div>
@@ -579,60 +585,68 @@
               </div>
             </n-tab-pane>
             <!-- ═══ TAB 4: EQUIPMENT CHECKLIST ═══ -->
-            <!-- <n-tab-pane name="checklist" tab="បញ្ជីត្រួតពិនិត្យ" >
+            <n-tab-pane name="checklist" tab="បញ្ជីត្រួតពិនិត្យ">
               <div class="p-4 md:p-6">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   
                   <div class="rounded-lg border border-gray-200 overflow-hidden">
                     <div class="px-4 py-3 bg-amber-50 border-b border-amber-200 flex items-center justify-between">
-                      <h3 class="font-moul text-md text-amber-800 flex items-center"><svg class="w-5 h-5 mr-2 text-amber-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM11.75 6a.75.75 0 0 1 .75.75V12h3.75a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75V6.75a.75.75 0 0 1 .75-.75z" fill="currentColor"></path></g></svg>មុនពេលប្រជុំ</h3>
-                      <span class="text-xs font-bold px-2 py-0.5 rounded-full" :class="preCheckAllDone?'bg-green-100 ':'bg-amber-100 text-amber-700'">{{ preCheckDoneCount }}/{{ preChecklist.length }}</span>
+                      <h3 class="font-moul text-md text-amber-800">មុនពេលប្រជុំ</h3>
+                      <span class="text-xs font-bold px-2 py-0.5 rounded-full" :class="preCheckAllDone?'bg-green-100':'bg-amber-100 text-amber-700'">{{ preCheckDoneCount }}/{{ preChecklist.length }}</span>
                     </div>
-                    <div class="p-4 space-y-1">
-                      <div v-if="preChecklist.length===0" class="text-gray-400 text-sm text-center py-4">មិនទាន់មានបញ្ជីត្រួតពិនិត្យ</div>
-                      <div v-for="item in preChecklist" :key="'pre'+item.id" class="flex items-center space-x-2 p-2 rounded hover:bg-gray-50 transition-colors">
-                        <n-checkbox :checked="item.is_checked" @update:checked="toggleCheck(item)" class="flex-none" />
-                        <div class="flex-1 min-w-0">
-                          <span :class="item.is_checked?'text-gray-400 line-through':''" class="text-sm font-medium">{{ item.item_name }}</span>
-                        </div>
-                        <n-tag
-                          :type="item.equipment_status === 'working' ? 'success' : 'error'"
-                          size="tiny" round
-                          @click="toggleEquipStatus(item)"
-                          class="cursor-pointer flex-none">
-                          {{ item.equipment_status === 'working' ? 'ដំណើរការ' : 'ខូច' }}
-                        </n-tag>
-                        <span v-if="item.checked_at" class="text-xs text-gray-400 flex-none w-12 text-right">{{ item.checked_at }}</span>
-                      </div>
-                    </div>
+                    <div v-if="preChecklist.length===0" class="text-gray-400 text-sm text-center py-4">មិនទាន់មានបញ្ជីត្រួតពិនិត្យ</div>
+                    <table v-else class="w-full border-collapse">
+                      <thead>
+                        <tr class="bg-gray-50 text-left">
+                          <th class="p-2 text-xs border-b w-10"></th>
+                          <th class="p-2 text-xs border-b">ឈ្មោះឧបករណ៍</th>
+                          <th class="p-2 text-xs border-b w-24">ស្ថានភាព</th>
+                          <th class="p-2 text-xs border-b w-16">ម៉ោង</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="item in preChecklist" :key="'pre'+item.id" class="hover:bg-gray-50 border-b border-gray-100">
+                          <td class="p-2 text-center"><n-checkbox :checked="item.is_checked" @update:checked="toggleCheck(item)" size="small" /></td>
+                          <td class="p-2 text-sm" :class="item.is_checked?'text-gray-400 line-through':''">{{ item.item_name }}</td>
+                          <td class="p-2">
+                            <n-tag :type="item.equipment_status === 'working' ? 'success' : 'error'" size="tiny" round @click="toggleEquipStatus(item)" class="cursor-pointer">{{ item.equipment_status === 'working' ? 'ដំណើរការ' : 'ខូច' }}</n-tag>
+                          </td>
+                          <td class="p-2 text-xs text-gray-400">{{ item.checked_at || '—' }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                   
                   <div class="rounded-lg border border-gray-200 overflow-hidden">
                     <div class="px-4 py-3 bg-blue-50 border-b border-blue-200 flex items-center justify-between">
-                      <h3 class="font-moul text-md text-blue-800 flex items-center"><svg class="w-5 h-5 mr-2 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM15.78 9.28a.75.75 0 0 1 .073.977l-.073.083l-4.5 4.5a.75.75 0 0 1-.977.073l-.083-.073l-2-2a.75.75 0 0 1 .977-1.133l.083.073L10.75 13.25l3.97-3.97a.75.75 0 0 1 1.06 0z" fill="currentColor"></path></g></svg>ក្រោយពេលប្រជុំ</h3>
-                      <span class="text-xs font-bold px-2 py-0.5 rounded-full" :class="postCheckAllDone?'bg-green-100 ':'bg-blue-100 text-blue-700'">{{ postCheckDoneCount }}/{{ postChecklist.length }}</span>
+                      <h3 class="font-moul text-md text-blue-800">ក្រោយពេលប្រជុំ</h3>
+                      <span class="text-xs font-bold px-2 py-0.5 rounded-full" :class="postCheckAllDone?'bg-green-100':'bg-blue-100 text-blue-700'">{{ postCheckDoneCount }}/{{ postChecklist.length }}</span>
                     </div>
-                    <div class="p-4 space-y-1">
-                      <div v-if="postChecklist.length===0" class="text-gray-400 text-sm text-center py-4">មិនទាន់មានបញ្ជីត្រួតពិនិត្យ</div>
-                      <div v-for="item in postChecklist" :key="'post'+item.id" class="flex items-center space-x-2 p-2 rounded hover:bg-gray-50 transition-colors">
-                        <n-checkbox :checked="item.is_checked" @update:checked="toggleCheck(item)" class="flex-none" />
-                        <div class="flex-1 min-w-0">
-                          <span :class="item.is_checked?'text-gray-400 line-through':''" class="text-sm font-medium">{{ item.item_name }}</span>
-                        </div>
-                        <n-tag
-                          :type="item.equipment_status === 'working' ? 'success' : 'error'"
-                          size="tiny" round
-                          @click="toggleEquipStatus(item)"
-                          class="cursor-pointer flex-none">
-                          {{ item.equipment_status === 'working' ? 'ដំណើរការ' : 'ខូច' }}
-                        </n-tag>
-                        <span v-if="item.checked_at" class="text-xs text-gray-400 flex-none w-12 text-right">{{ item.checked_at }}</span>
-                      </div>
-                    </div>
+                    <div v-if="postChecklist.length===0" class="text-gray-400 text-sm text-center py-4">មិនទាន់មានបញ្ជីត្រួតពិនិត្យ</div>
+                    <table v-else class="w-full border-collapse">
+                      <thead>
+                        <tr class="bg-gray-50 text-left">
+                          <th class="p-2 text-xs border-b w-10"></th>
+                          <th class="p-2 text-xs border-b">ឈ្មោះឧបករណ៍</th>
+                          <th class="p-2 text-xs border-b w-24">ស្ថានភាព</th>
+                          <th class="p-2 text-xs border-b w-16">ម៉ោង</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="item in postChecklist" :key="'post'+item.id" class="hover:bg-gray-50 border-b border-gray-100">
+                          <td class="p-2 text-center"><n-checkbox :checked="item.is_checked" @update:checked="toggleCheck(item)" size="small" /></td>
+                          <td class="p-2 text-sm" :class="item.is_checked?'text-gray-400 line-through':''">{{ item.item_name }}</td>
+                          <td class="p-2">
+                            <n-tag :type="item.equipment_status === 'working' ? 'success' : 'error'" size="tiny" round @click="toggleEquipStatus(item)" class="cursor-pointer">{{ item.equipment_status === 'working' ? 'ដំណើរការ' : 'ខូច' }}</n-tag>
+                          </td>
+                          <td class="p-2 text-xs text-gray-400">{{ item.checked_at || '—' }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
-            </n-tab-pane> -->
+            </n-tab-pane>
 
             <!-- ═══ TAB 5: LEGAL DRAFT ═══ -->
             <n-tab-pane name="draft" tab="សេចក្តីព្រាង">
@@ -912,6 +926,15 @@ export default {
         }).catch(() => { notify.error({ title:'កំហុស', description:'បញ្ហាកំណត់វត្តមាន' }) })
     }
 
+    function togglePublish(record) {
+      store.dispatch('meeting/toggleActive', { id: record.id })
+        .then(res => {
+          if (res.data?.ok) {
+            record.active = record.active ? 0 : 1
+            message.success(record.active ? 'បានផ្សាយទៅកាន់ TV ហើយ' : 'បានឈប់ផ្សាយ')
+          }
+        }).catch(() => notify.error({ title:'កំហុស', description:'បញ្ហាក្នុងពេលផ្សាយ' }))
+    }
     function formatDate(d){if(!d)return'មិនបានកំណត់';try{const dt=new Date(d);if(isNaN(dt.getTime()))return d;return dateFormat(dt,'dd-mm-yyyy')}catch(e){return d}}
 
     const meetingLeaders=computed(()=>{if(!record.value||!record.value.listMembers)return[];return record.value.listMembers.filter(lm=>lm.group==='lead_meeting'&&lm.role==='leader')})
@@ -1441,7 +1464,7 @@ export default {
     onMounted(()=>{fetchMeeting()})
     watch(()=>route.params.id,()=>{fetchMeeting()})
 
-    return{record,loading,error,formatDate,meetingLeaders,roleLabel,roleClass,groupLabel,groupClass,
+    return{record,loading,error,togglePublish,formatDate,meetingLeaders,roleLabel,roleClass,groupLabel,groupClass,
       showEditModal, closeEditModal,
       agendas,showAgendaForm,editingAgendaIndex,agendaForm,totalDuration,formatDuration,availableHandlers,openAddAgenda,openEditAgenda,saveAgenda,removeAgenda,
       roomSeats,seatLoading,headTableSeats,leftSideSeats,rightSideSeats,audienceSeats,audienceCols,seatColorClass,seatBadgeClass,roleBorderClass,roleRingClass,roleTextClass,roleBadgeClass,

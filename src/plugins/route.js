@@ -28,6 +28,7 @@ import ScheduleMeetingTV1Component from '../layouts/welcome/template1.vue'
 import ScheduleMeetingTV2Component from '../layouts/welcome/template2.vue'
 import ScheduleMeetingTV3Component from '../layouts/welcome/template3.vue'
 import ScheduleMeetingTV4Component from '../layouts/welcome/template4.vue'
+import ScheduleMeetingTVXComponent from '../layouts/welcome/templatex.vue'
 
 // User management
 import UserComponent from '../components/user/index.vue'
@@ -344,6 +345,11 @@ function getAuthenticatedRoutes() {
           path: 'tvtemplate4',
           component: ScheduleMeetingTV4Component,
         },
+        {
+          name: 'ScheduleMeetingTVX',
+          path: 'tvtemplatex',
+          component: ScheduleMeetingTVXComponent,
+        },
 
         // ── Officer Card ───────────────────────────────────────────────
         {
@@ -416,6 +422,11 @@ function getUnauthenticatedRoutes() {
       name: 'ScheduleMeetingTV4',
       path: '/tvtemplate4',
       component: ScheduleMeetingTV4Component,
+    },
+    {
+      name: 'ScheduleMeetingTVX',
+      path: '/tvtemplatex',
+      component: ScheduleMeetingTVXComponent,
     },
 
     // ── Officer Card (public) ──────────────────────────────────────────
