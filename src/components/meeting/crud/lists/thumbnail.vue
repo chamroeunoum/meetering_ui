@@ -6,10 +6,26 @@
         <svg class="flex-none w-8 h-8 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/><path d="M3 9V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4"/><path d="M8 3v4"/><path d="M16 3v4"/><path d="M8 13h.01"/><path d="M12 13h.01"/><path d="M16 13h.01"/><path d="M8 17h.01"/><path d="M12 17h.01"/><path d="M16 17h.01"/></svg>
         <div class="font-moul ml-2 h-8 leading-9">កិច្ចប្រជុំ</div>
       </div>
-      <div class="flex-grow flex flex-row-reverse gap-2">
-        <n-button type="success" size="small" @click="showCreateModal = true">
+      <div class="flex-grow flex flex-row-reverse gap-2 items-center">
+        <n-button type="success" size="small" @click="showCreateModal()">
           <template #icon>+</template> បន្ថែម
         </n-button>
+        <n-button size="tiny" quaternary @click="$router.push('/meetings/schedule')" class="!p-1">
+          <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+        </n-button>
+        <n-button size="tiny" quaternary @click="openTvSchedule" class="!p-1">
+          <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </n-button>
+        <div class="w-36 relative h-8">
+          <n-select
+            v-model:value="selectedStatuses"
+            :options="headerStatusOptions"
+            placeholder="ស្ថានភាព"
+            size="small"
+            clearable
+            @update:value="onHeaderStatusChange"
+          />
+        </div>
         <div class="w-2/5 relative h-8">
           <input type="text" @keypress.enter="fetchRooms(false)" v-model="search"
             class="px-2 h-8 w-full rounded border border-gray-200 focus:border-blue-600"
@@ -248,7 +264,13 @@
           v-if="Array.isArray(records) && records.length > 0"
           class="vcb-horizontal mb-24 px-2"
         >
-          <div v-for="(record, index) in records" :key="'h'+index" class="item-h bg-card rounded-lg border border-default p-4">
+          <div v-for="(record, index) in records" :key="'h'+index" class="item-h bg-card rounded-lg border border-default p-4 relative">
+            <!-- Status badge top-right -->
+            <div v-if="record.status"
+              class="absolute top-2 right-2 px-2 py-0.5 rounded-full text-xxs font-bold border z-10"
+              :class="getStatusBadgeClass(record.status)">
+              {{ getStatusLabel(record.status) }}
+            </div>
             <router-link :to="'/meetings/' + record.id" class="block">
               <div class="content-h">
                 <!-- Line 1: Objective (full width, bold, big, gray) -->
@@ -256,7 +278,7 @@
                   <pre class="font-bold text-base text-wrap leading-6" v-html="applyTagMark(record.objective)"></pre>
                 </div>
                 <!-- Line 2: All info inline -->
-                <div class="w-full flex flex-wrap items-center gap-x-4 gap-y-1 text-xxs text-gray-500">
+                <div class="w-full flex flex-wrap items-center gap-x-4 gap-y-1 text-xxs ">
                   <span class="flex items-center">
                     <svg class="w-3.5 h-3.5 mr-1 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M17.75 3A3.25 3.25 0 0 1 21 6.25v11.5A3.25 3.25 0 0 1 17.75 21H6.25A3.25 3.25 0 0 1 3 17.75V6.25A3.25 3.25 0 0 1 6.25 3h11.5zm0 1.5H6.25A1.75 1.75 0 0 0 4.5 6.25v11.5c0 .966.784 1.75 1.75 1.75h11.5a1.75 1.75 0 0 0 1.75-1.75V6.25a1.75 1.75 0 0 0-1.75-1.75zM7.75 7a.75.75 0 0 1 .75.75V9.5h7V7.75a.75.75 0 0 1 1.5 0V9.5h.75c.966 0 1.75.784 1.75 1.75v1.5a.75.75 0 0 1-1.5 0v-1.5a.25.25 0 0 0-.25-.25h-.75v.75a.75.75 0 0 1-1.5 0v-.75h-7v.75a.75.75 0 0 1-1.5 0v-.75H7.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h4a.75.75 0 0 1 0 1.5h-4A1.75 1.75 0 0 1 5.5 18.75v-7.5c0-.966.784-1.75 1.75-1.75H8V7.75A.75.75 0 0 1 8.75 7h-1z" fill="currentColor"></path></g></svg>
                     {{ $toKhmer(dateFormat(new Date(record.date), 'dd-mm-yyyy')) }}
@@ -265,7 +287,7 @@
                     <svg class="w-3.5 h-3.5 mr-1 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM11.75 6a.75.75 0 0 1 .75.75V12h3.75a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75V6.75a.75.75 0 0 1 .75-.75z" fill="currentColor"></path></g></svg>
                     {{ $toKhmer(record.start + ' - ' + record.end) }}
                   </span>
-                  <span v-if="record.type" class="text-gray-600">{{ record.type.name }}</span>
+                  <span v-if="record.type" class="">{{ record.type.name }}</span>
                   <span v-if="Array.isArray(record.rooms) && record.rooms.length > 0" class="flex items-center">
                     <svg class="w-3.5 h-3.5 mr-1 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 13c0-.55-.45-1-1-1h-4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1l1.27.67c.33.18.73-.06.73-.44v-2.46c0-.38-.4-.62-.73-.44L18 14v-1zm-7.2-9.1l-6 4.5c-.5.38-.8.97-.8 1.6v9c0 1.1.9 2 2 2h13c.55 0 1-.45 1-1s-.45-1-1-1H6v-9l6-4.5 6 4.5v1h2v-1c0-.63-.3-1.22-.8-1.6l-6-4.5a2.01 2.01 0 0 0-2.4 0z" fill="currentColor"></path></svg>
                     {{ record.rooms.map(r => r.name).join(', ') }}
@@ -293,7 +315,7 @@
             !Array.isArray(records) ||
             (Array.isArray(records) && records.length <= 0)
           "
-          class="mt-24 text-lg text-gray-600"
+          class="mt-24 text-lg "
         >
           មិនមានព័ត៌មានសម្រាប់បង្ហាញឡើយ។
         </div>
@@ -559,7 +581,7 @@
             <template #trigger>
               <svg
                 class="w-8 h-8 cursor-pointer text-blue-500 duration-300"
-                @click="showCreateModal"
+                @click="showCreateModal()"
                 xmlns="http://www.w3.org/2000/svg"
                 xmlns:xlink="http://www.w3.org/1999/xlink"
                 viewBox="0 0 24 24"
@@ -723,6 +745,10 @@ export default {
     const message = useMessage();
     const notify = useNotification();
     const crud = ref(null);
+
+    function openTvSchedule() {
+      window.open('/tvtemplate1', '_blank')
+    }
 
     const server = ref(store.getters[props.model.name + "/server"]);
     const pagination = ref(store.getters[props.model.name + "/pagination"]);
@@ -914,6 +940,20 @@ export default {
         color: " text-gray-600",
       },
     ]);
+    const headerStatusOptions = computed(() => {
+      return statuses.filter(s => s.value !== null).map(s => ({
+        label: s.label,
+        value: s.value,
+      }));
+    });
+    function onHeaderStatusChange(value) {
+      if (value != null && value !== undefined) {
+        selectedStatuses.value = [value];
+      } else {
+        selectedStatuses.value = [];
+      }
+      goTo(1);
+    }
     function updateStatus(value, selection) {
       selectedStatuses.value = value.filter((val) => parseInt(val) > 0);
       goTo(1);
@@ -924,8 +964,19 @@ export default {
     });
 
     function getStatusLabel(code) {
-      let status = statuses.find((s) => s.code == code);
+      let status = statuses.find((s) => s.value == code);
       return status != undefined ? status.label : "មិនមាន";
+    }
+    function getStatusBadgeClass(code) {
+      const map = {
+        1: 'bg-blue-100 text-blue-700 border-blue-300',
+        2: 'bg-green-100 text-green-700 border-green-300',
+        4: 'bg-yellow-100 text-yellow-700 border-yellow-300',
+        8: 'bg-pink-100 text-pink-700 border-pink-300',
+        16: 'bg-orange-100 text-orange-700 border-orange-300',
+        32: 'bg-gray-100 text-gray-600 border-gray-300',
+      };
+      return map[code] || 'bg-gray-100 text-gray-600 border-gray-300';
     }
 
     function getTypes() {
@@ -1098,6 +1149,9 @@ export default {
         store.getters[props.model.name + "/columns"].all,
       );
 
+      // Default filter: show only New (status=1) meetings
+      selectedStatuses.value = [1];
+
       getRecords();
       getTypes();
       getOrganizations();
@@ -1130,6 +1184,7 @@ export default {
       createModal,
       showCreateModal,
       closeCreateModal,
+      openTvSchedule,
       /**
        * Records Functions
        */
@@ -1146,8 +1201,11 @@ export default {
       updateStatus,
       statuses,
       selectedStatuses,
+      headerStatusOptions,
+      onHeaderStatusChange,
       today,
       getStatusLabel,
+      getStatusBadgeClass,
       updateType,
       types,
       updateOrganization,

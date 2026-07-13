@@ -93,6 +93,9 @@ const actions = {
   async toggleActive({state, commit, rootState}, params){
     return await crud.update(state.server+"/"+state.model.module+"/toggleactive",params)
   },
+  async save({state}, params) {
+    return await crud.create(state.server+"/"+state.model.module+"/save", params)
+  },
   async uploadPicture({ state, commit, rootState },formData) {
     return await crud.upload(state.server+"/"+state.model.module+"/upload/picture",formData)
   },

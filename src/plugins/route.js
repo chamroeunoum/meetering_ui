@@ -83,6 +83,11 @@ import MeetingThumbnailComponent from '../components/meeting/crud/lists/thumbnai
 import MeetingDetailComponent from '../components/meeting/crud/lists/detail.vue'
 import DraftViewerComponent from '../components/meeting/crud/lists/draft-viewer.vue'
 import DraftTimelineComponent from '../components/meeting/crud/lists/timeline.vue'
+import MeetingScheduleComponent from '../components/meeting/crud/lists/schedule.vue'
+
+// People management
+import PeopleComponent from '../components/people/index.vue'
+import PeopleListComponent from '../components/people/list.vue'
 
 // Error page
 import Page404 from '../components/errors/404.vue'
@@ -172,6 +177,11 @@ function getAuthenticatedRoutes() {
               name: 'DraftTimeline',
               path: ':meeting_id/timeline',
               component: DraftTimelineComponent,
+            },
+            {
+              name: 'MeetingSchedule',
+              path: 'schedule',
+              component: MeetingScheduleComponent,
             },
           ],
         },
@@ -277,6 +287,21 @@ function getAuthenticatedRoutes() {
               name: 'UserList',
               path: '',
               component: UserListComponent,
+            },
+          ],
+        },
+
+        // ── People ────────────────────────────────────────────────────────
+        {
+          name: 'People',
+          path: 'people',
+          component: PeopleComponent,
+          meta: { transition: 'slide-right', requiresAuth: true },
+          children: [
+            {
+              name: 'PeopleList',
+              path: '',
+              component: PeopleListComponent,
             },
           ],
         },

@@ -16,7 +16,7 @@
             class="dashboard-card cursor-pointer border-l-4 border-blue-500">
             <div class="flex items-center justify-between">
               <div>
-                <div class="text-xs text-muted">គណនីអ្នកប្រើប្រាស់</div>
+                <div class="text-xs text-muted">អ្នកប្រើប្រាស់</div>
                 <div class="text-2xl font-bold text-blue-600">{{ summary.users }}</div>
               </div>
               <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -154,6 +154,74 @@
         </div>
       </div>
 
+      <!-- Section: Meetings by Room -->
+      <div class="mb-6" v-if="meetingsByRoom.length > 0">
+        <div class="bg-card rounded-lg border border-default p-4">
+          <div class="font-moul text-sm text-secondary mb-3">កិច្ចប្រជុំតាមបន្ទប់</div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <template v-for="(item, idx) in meetingsByRoom" :key="idx">
+              <div v-if="item" class="rounded-lg border border-default p-4 text-center">
+                <div class="text-xs text-muted mb-1 truncate">{{ item.name || '' }}</div>
+                <div class="text-2xl font-bold" :class="roomColors[idx % roomColors.length]">{{ item.count ?? 0 }}</div>
+                <div class="text-xs text-muted mt-1">កិច្ចប្រជុំ</div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Document Statistics -->
+      <div class="mb-6" v-if="meetingsDocumentsStats.length > 0">
+        <div class="bg-card rounded-lg border border-default p-4">
+          <div class="font-moul text-sm text-secondary mb-3">ឯកសារភ្ជាប់នឹងកិច្ចប្រជុំ</div>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+            <template v-for="(item, idx) in meetingsDocumentsStats" :key="idx">
+              <div v-if="item" class="rounded-lg border border-default p-3 text-center">
+                <div class="text-xl font-bold" :class="docTextColors[idx % docTextColors.length]">{{ item.count ?? 0 }}</div>
+                <div class="text-xs text-muted truncate mt-1" :title="item.label || ''">{{ item.label || '' }}</div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Meetings by Month -->
+      <div class="mb-6" v-if="meetingsByMonth.length > 0">
+        <div class="bg-card rounded-lg border border-default p-4">
+          <div class="font-moul text-sm text-secondary mb-3">កិច្ចប្រជុំប្រចាំខែ</div>
+          <div class="space-y-2">
+            <template v-for="(item, idx) in meetingsByMonth" :key="idx">
+              <div v-if="item && item.count > 0" class="flex items-center gap-2">
+                <div class="w-16 text-xs text-secondary truncate">{{ item.label || '' }}</div>
+                <div class="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-700"
+                    :class="monthColors[idx % monthColors.length]"
+                    :style="{ width: monthBarWidth(item.count ?? 0) + '%' }">
+                  </div>
+                </div>
+                <div class="text-xs font-semibold text-primary w-10 text-right">{{ item.count ?? 0 }}</div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: PDF Files Overview -->
+      <div class="mb-6" v-if="meetingsPdfTotal.length > 0">
+        <div class="bg-card rounded-lg border border-default p-4">
+          <div class="font-moul text-sm text-secondary mb-3">ចំនួនឯកសារ PDF សរុប</div>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <template v-for="(item, idx) in meetingsPdfTotal" :key="idx">
+              <div v-if="item" class="rounded-lg border border-default p-3 text-center">
+                <div class="text-xs text-muted mb-1 truncate" :title="item.label || ''">{{ item.label || '' }}</div>
+                <div class="text-xl font-bold" :class="pdfColors[idx % pdfColors.length]">{{ item.count ?? 0 }}</div>
+                <div class="text-xs text-muted mt-1">ឯកសារ</div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
       <!-- Section: Quick Access -->
       <!-- <div class="mb-6">
         <div class="font-moul text-sm text-secondary mb-3 px-2">ច្រកចូលរហ័ស</div>
@@ -193,6 +261,10 @@ export default {
     const meetingsByType = computed(() => store.state.dashboard.meetingsByType)
     const meetingsByStatus = computed(() => store.state.dashboard.meetingsByStatus)
     const meetingsByOrganization = computed(() => store.state.dashboard.meetingsByOrganization)
+    const meetingsByRoom = computed(() => store.state.dashboard.meetingsByRoom)
+    const meetingsDocumentsStats = computed(() => store.state.dashboard.meetingsDocumentsStats)
+    const meetingsByMonth = computed(() => store.state.dashboard.meetingsByMonth)
+    const meetingsPdfTotal = computed(() => store.state.dashboard.meetingsPdfTotal)
     const taskStats = computed(() => store.state.dashboard.taskStats)
     const loading = computed(() => store.state.dashboard.loading)
 
@@ -225,6 +297,45 @@ export default {
       'bg-rose-400', 'bg-lime-400', 'bg-sky-400',
       'bg-fuchsia-400', 'bg-emerald-400'
     ]
+
+    const roomColors = [
+      'text-blue-600', 'text-green-600', 'text-purple-600',
+      'text-orange-600', 'text-cyan-600', 'text-pink-600'
+    ]
+
+    const docColors = [
+      'bg-red-400', 'bg-amber-400', 'bg-blue-400',
+      'bg-green-400', 'bg-purple-400'
+    ]
+
+    const monthColors = [
+      'bg-indigo-400', 'bg-blue-400', 'bg-cyan-400',
+      'bg-teal-400', 'bg-green-400', 'bg-lime-400',
+      'bg-yellow-400', 'bg-amber-400', 'bg-orange-400',
+      'bg-red-400', 'bg-pink-400', 'bg-purple-400'
+    ]
+
+    const pdfColors = [
+      'text-red-600', 'text-amber-600', 'text-blue-600',
+      'text-green-600', 'text-purple-600'
+    ]
+
+    const docTextColors = [
+      'text-red-600', 'text-amber-600', 'text-blue-600',
+      'text-green-600', 'text-purple-600'
+    ]
+
+    function docBarWidth(count) {
+      const total = meetingsDocumentsStats.value.find(m => m.type === 'total')?.count || 1
+      return Math.max((count / total) * 100, 2)
+    }
+
+    function monthBarWidth(count) {
+      const all = meetingsByMonth.value
+      if (all.length === 0) return 0
+      const max = Math.max(...all.map(i => i.count || 0), 1)
+      return Math.max((count / max) * 100, 2)
+    }
 
     function statusLabel(status) {
       const map = {
@@ -291,12 +402,23 @@ export default {
       meetingsByType,
       meetingsByStatus,
       meetingsByOrganization,
+      meetingsByRoom,
+      meetingsDocumentsStats,
+      meetingsByMonth,
+      meetingsPdfTotal,
       taskStats,
       loading,
       barWidth,
       barColors,
       statusColors,
       orgColors,
+      roomColors,
+      docColors,
+      monthColors,
+      pdfColors,
+      docBarWidth,
+      monthBarWidth,
+      docTextColors,
       statusLabel,
       quickLinks
     }

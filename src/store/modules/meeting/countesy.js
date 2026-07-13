@@ -70,12 +70,12 @@ const actions = {
    * Crud functions
    */
   async list ({ state, commit, rootState },params) {
+    const query = {}
+    if (params.search !== undefined && params.search !== null) query.search = params.search
+    if (params.perPage !== undefined && params.perPage !== null) query.perPage = params.perPage
+    if (params.page !== undefined && params.page !== null) query.page = params.page
     return await crud.list(
-      state.server+"/"+state.model.module + "?" + new URLSearchParams({
-        search: params.search ,
-        perPage: params.perPage ,
-        page: params.page
-      }).toString()
+      state.server+"/"+state.model.module + "?" + new URLSearchParams(query).toString()
     )
   },
   async read ({ state, commit, rootState },params) {

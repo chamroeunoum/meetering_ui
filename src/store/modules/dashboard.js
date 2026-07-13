@@ -32,6 +32,14 @@ const state = () => ({
   meetingsThisWeek: [],
   /** @type {Array} Meetings this month by type */
   meetingsThisMonth: [],
+  /** @type {Array} Meetings by room */
+  meetingsByRoom: [],
+  /** @type {Array} Document statistics */
+  meetingsDocumentsStats: [],
+  /** @type {Array} Meetings by month */
+  meetingsByMonth: [],
+  /** @type {Array} PDF file counts per type */
+  meetingsPdfTotal: [],
   /** @type {Object} Task stats { new, in_progress, pending, ended } */
   taskStats: {
     new: 0,
@@ -53,7 +61,8 @@ const actions = {
   async fetchSummary({ commit }) {
     commit('setLoading', true)
     try {
-      const [users, regulators, meetings, meetingsByType, meetingsByStatus, meetingsByOrg, meetingsWeek, taskStats] =
+      const [users, regulators, meetings, meetingsByType, meetingsByStatus, meetingsByOrg, meetingsWeek, taskStats,
+             meetingsByRoom, meetingsDocumentsStats, meetingsByMonth, meetingsPdfTotal] =
         await Promise.allSettled([
           crud.read(`${apiBase}/dashboard/users/total`),
           crud.read(`${apiBase}/dashboard/regulators/total`),
@@ -63,6 +72,10 @@ const actions = {
           crud.read(`${apiBase}/dashboard/meetings/total/byorganization`),
           crud.read(`${apiBase}/dashboard/meetings/total/bytype/thisweek`),
           crud.read(`${apiBase}/tasks/total_number_of_each_status`),
+          crud.read(`${apiBase}/dashboard/meetings/total/byroom`),
+          crud.read(`${apiBase}/dashboard/meetings/total/bydocuments`),
+          crud.read(`${apiBase}/dashboard/meetings/total/bymonth`),
+          crud.read(`${apiBase}/dashboard/meetings/total/bypdftotal`),
         ])
 
       commit('setSummary', {
@@ -85,6 +98,18 @@ const actions = {
       }
       if (taskStats.status === 'fulfilled' && taskStats.value?.data) {
         commit('setTaskStats', taskStats.value.data)
+      }
+      if (meetingsByRoom.status === 'fulfilled' && meetingsByRoom.value?.data?.ok) {
+        commit('setMeetingsByRoom', meetingsByRoom.value.data.result)
+      }
+      if (meetingsDocumentsStats.status === 'fulfilled' && meetingsDocumentsStats.value?.data?.ok) {
+        commit('setMeetingsDocumentsStats', meetingsDocumentsStats.value.data.result)
+      }
+      if (meetingsByMonth.status === 'fulfilled' && meetingsByMonth.value?.data?.ok) {
+        commit('setMeetingsByMonth', meetingsByMonth.value.data.result)
+      }
+      if (meetingsPdfTotal.status === 'fulfilled' && meetingsPdfTotal.value?.data?.ok) {
+        commit('setMeetingsPdfTotal', meetingsPdfTotal.value.data.result)
       }
     } finally {
       commit('setLoading', false)
@@ -190,15 +215,47 @@ const mutations = {
   },
 
   setMeetingsByType(state, data) {
-    state.meetingsByType = Array.isArray(data) ? data : []
+    // API returns { total, records: [{ type: {id, name}, total: count }] }
+    if (data && data.records && Array.isArray(data.records)) {
+      state.meetingsByType = data.records.map(r => ({
+        name: r.type?.name || 'ផ្សេងៗ',
+        count: r.total,
+        type: r.type
+      }))
+    } else if (Array.isArray(data)) {
+      state.meetingsByType = data
+    } else {
+      state.meetingsByType = []
+    }
   },
 
   setMeetingsByStatus(state, data) {
-    state.meetingsByStatus = Array.isArray(data) ? data : []
+    // API returns { total, records: [{ status: {id, name}, total: count }] }
+    if (data && data.records && Array.isArray(data.records)) {
+      state.meetingsByStatus = data.records.map(r => ({
+        name: r.status?.name || 'ផ្សេងៗ',
+        count: r.total,
+        status: r.status
+      }))
+    } else if (Array.isArray(data)) {
+      state.meetingsByStatus = data
+    } else {
+      state.meetingsByStatus = []
+    }
   },
 
   setMeetingsByOrganization(state, data) {
-    state.meetingsByOrganization = Array.isArray(data) ? data : []
+    // API returns { total, records: [{ name, count }] } OR a plain array
+    if (data && data.records && Array.isArray(data.records)) {
+      state.meetingsByOrganization = data.records.map(r => ({
+        name: r.name || r.organization || 'ផ្សេងៗ',
+        count: r.total || r.count || 0
+      }))
+    } else if (Array.isArray(data)) {
+      state.meetingsByOrganization = data
+    } else {
+      state.meetingsByOrganization = []
+    }
   },
 
   setMeetingsThisWeek(state, data) {
@@ -207,6 +264,22 @@ const mutations = {
 
   setMeetingsThisMonth(state, data) {
     state.meetingsThisMonth = Array.isArray(data) ? data : []
+  },
+
+  setMeetingsByRoom(state, data) {
+    state.meetingsByRoom = Array.isArray(data) ? data : []
+  },
+
+  setMeetingsDocumentsStats(state, data) {
+    state.meetingsDocumentsStats = Array.isArray(data) ? data : []
+  },
+
+  setMeetingsByMonth(state, data) {
+    state.meetingsByMonth = Array.isArray(data) ? data : []
+  },
+
+  setMeetingsPdfTotal(state, data) {
+    state.meetingsPdfTotal = Array.isArray(data) ? data : []
   },
 
   setTaskStats(state, data) {

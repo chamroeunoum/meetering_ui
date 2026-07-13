@@ -1,18 +1,18 @@
 <template>
-  <div class="w-full py-1 text-gray-500 mx-auto break-words bg-white print:hidden">
-    <div class="text-center copy-rightleading-9 flex justify-center flex-wrap text-gray-400" @click="toggleAbout=true" >
+  <div class="bg-card w-full py-1 mx-auto break-words print:hidden">
+    <div @click="toggleAbout=true" class="text-center copy-right leading-9 flex justify-center flex-wrap" >
       <div class="mx-2 p-1 h-5 text-xs" >
-        &copy; រក្សារសិទ្ធិគ្រប់យ៉ាង ២០២៤
+        &copy; រក្សារសិទ្ធិគ្រប់យ៉ាង ២០២៦
       </div>
       <div class="mx-2 p-1 h-5 text-xs " >
         អគ្គនាយកដ្ឋានបរិវត្តកម្មឌីជីថល
       </div>
     </div>
   </div>
-  <n-modal v-model:show="toggleAbout" class="bg-white rounded" :block-scroll="false" >
+  <n-modal v-model:show="toggleAbout" class="bg-card rounded" :block-scroll="false" >
     <div v-if="toggleAbout" class="relative about-us p-16 pb-20" >
       <div class="w-20 mx-auto my-4">
-        <img src="./../../assets/logo.svg" alt="SASTRA Logo" class="w-full" >
+        <img src="./../../assets/logo.svg" alt="OCM Logo" class="w-full" >
       </div>
       <div class="w-full font-moul text-center leading-9 text-xs" >ក្រោមការណែនាំដ៏ខ្ពង់ខ្ពស់របស់<br/>ឧបនាយករដ្ឋមន្ត្រី រដ្ឋមន្ត្រីទទួលបន្ទុកទីស្ដីការគណៈរដ្ឋមន្ត្រី</div>
       <div class="font-tacteing w-full text-center h-4 leading-4 text-4xl" >6</div>

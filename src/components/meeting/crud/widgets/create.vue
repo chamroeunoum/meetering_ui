@@ -122,6 +122,15 @@
                       :options="organizations"
                     />
                   </n-form-item>
+                  <n-form-item label="បន្ទប់ប្រជុំ" path="room" class="w-4/5 mr-8" >
+                    <n-select
+                      v-model:value="selectedRoom"
+                      filterable
+                      clearable
+                      placeholder="សូមជ្រើសរើសបន្ទប់ប្រជុំ"
+                      :options="rooms"
+                    />
+                  </n-form-item>
                 </n-form>
                 <div class="w-1/2 h-8"></div>  
               </div>
@@ -201,6 +210,14 @@ export default {
       })
     })
     const selectedOrganization = ref([])
+
+    const rooms = computed( () => {
+      const list = store.getters['meetingRoom/records'].all
+      return Array.isArray(list) ? list.map( ( r ) => {
+        return { label: r.name , value: r.id }
+      }) : []
+    })
+    const selectedRoom = ref(null)
 
     const today = ref( new Date() )
 
@@ -305,6 +322,14 @@ export default {
         ( res ) => {
           switch( res.status ){
             case 200 : 
+            // ── Toggle the selected room on the newly created meeting ──
+            const newMeetingId = res.data.record?.id
+            if ( selectedRoom.value && newMeetingId ) {
+              store.dispatch( props.model.name+'/toggleMeetingRoom', {
+                room: { id: selectedRoom.value },
+                meeting: { id: newMeetingId }
+              })
+            }
             notify.success({
               'title' : 'រក្សារទុកព័ត៌មាន' ,
               'description' : res.data.message ,
@@ -349,7 +374,9 @@ export default {
       selectedType ,
       types ,
       organizations ,
-      selectedOrganization
+      selectedOrganization ,
+      rooms ,
+      selectedRoom
     }
   }
 }
