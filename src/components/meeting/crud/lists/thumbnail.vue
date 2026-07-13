@@ -7,7 +7,7 @@
         <div class="font-moul ml-2 h-8 leading-9">កិច្ចប្រជុំ</div>
       </div>
       <div class="flex-grow flex flex-row-reverse gap-2">
-        <n-button type="success" size="small" @click="showCreateModal = true">
+        <n-button type="success" size="small" @click="showCreateModal">
           <template #icon>+</template> បន្ថែម
         </n-button>
         <div class="w-2/5 relative h-8">
