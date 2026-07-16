@@ -121,6 +121,15 @@
                       :options="organizations"
                     />
                   </n-form-item>
+                  <n-form-item label="បន្ទប់ប្រជុំ" path="room" class="w-4/5 mr-8" >
+                    <n-select
+                      v-model:value="selectedRoom"
+                      filterable
+                      clearable
+                      placeholder="សូមជ្រើសរើសបន្ទប់ប្រជុំ"
+                      :options="rooms"
+                    />
+                  </n-form-item>
                 </n-form>
                 <div class="w-1/2 h-8"></div>  
               </div>
@@ -209,6 +218,14 @@ export default {
       })
     })
     const selectedOrganization = ref([])
+
+    const rooms = computed( () => {
+      const list = store.getters['meetingRoom/records'].all
+      return Array.isArray(list) ? list.map( ( r ) => {
+        return { label: r.name , value: r.id }
+      }) : []
+    })
+    const selectedRoom = ref(null)
 
     const today = ref( new Date() )
 
@@ -308,17 +325,48 @@ export default {
       props.record.organizations = Array.isArray( selectedOrganization.value ) && selectedOrganization.value.length > 0 ? selectedOrganization.value : []
 
       btnSavingLoadingRef.value = true
-      store.dispatch( props.model.name+'/update',{
-        id: props.record.id ,
-        objective: props.record.objective ,
-        date: props.record.date  ,
-        start: props.record.start ,
-        end: props.record.end ,
-        type_id: props.record.type_id ,
-        contact_info : props.record.contact_info ,
-        route : props.record.route ,
-        summary : props.record.summary ,
-        organizations : props.record.organizations
+
+      // ── Handle room change (toggle) ──────────────────────────────────
+      const currentRoomId = props.record.rooms != undefined && props.record.rooms.length > 0
+        ? props.record.rooms[0].id
+        : null
+      const newRoomId = selectedRoom.value
+
+      const roomTogglePromises = []
+      // If room changed, untoggle old room
+      if (currentRoomId && currentRoomId !== newRoomId) {
+        const oldRoom = props.record.rooms[0]
+        roomTogglePromises.push(
+          store.dispatch( props.model.name+'/toggleMeetingRoom',{
+            room: oldRoom,
+            meeting: props.record
+          })
+        )
+      }
+      // Toggle new room if different from old
+      if (newRoomId && newRoomId !== currentRoomId) {
+        roomTogglePromises.push(
+          store.dispatch( props.model.name+'/toggleMeetingRoom',{
+            room: { id: newRoomId },
+            meeting: props.record
+          })
+        )
+      }
+
+      // Wait for room toggles then update meeting info
+      Promise.all( roomTogglePromises ).then( () => {
+        return store.dispatch( props.model.name+'/update',{
+          id: props.record.id ,
+          objective: props.record.objective ,
+          date: props.record.date  ,
+          start: props.record.start ,
+          end: props.record.end ,
+          type_id: props.record.type_id ,
+          contact_info : props.record.contact_info ,
+          route : props.record.route ,
+          summary : props.record.summary ,
+          organizations : props.record.organizations
+        })
       }).then( res => {
         switch( res.status ){
           case 200 : 
@@ -352,10 +400,36 @@ export default {
     }
 
     function initial(){
+      // Load meeting types, organizations, and rooms if not already loaded
+      var typeRecords = store.getters['meetingType/records'].all
+      if( typeRecords == undefined || typeRecords.length == 0 ){
+        store.dispatch('meetingType/list',{ page: 1, perPage: 200, search: '' }).then( res => {
+          if( res.data && res.data.records ) store.commit('meetingType/setAllRecords', res.data.records )
+        })
+      }
+      var orgRecords = store.getters['meetingOrganization/records'].all
+      if( orgRecords == undefined || orgRecords.length == 0 ){
+        store.dispatch('meetingOrganization/list',{ page: 1, perPage: 200, search: '' }).then( res => {
+          if( res.data && res.data.records ) store.commit('meetingOrganization/setAllRecords', res.data.records )
+        })
+      }
+      var roomRecords = store.getters['meetingRoom/records'].all
+      if( roomRecords == undefined || roomRecords.length == 0 ){
+        store.dispatch('meetingRoom/list',{ page: 1, perPage: 200, search: '' }).then( res => {
+          if( res.data && res.data.records ) store.commit('meetingRoom/setAllRecords', res.data.records )
+        })
+      }
+
       selectedType.value = props.record.type_id > 0 ? props.record.type_id : null
       if( props.record.organizations != undefined && props.record.organizations.length > 0 ) {
         selectedOrganization.value = []
         for( var i in props.record.organizations ) selectedOrganization.value.push( props.record.organizations[i].id )
+      }
+      // Pre-select the first room from the meeting's current rooms
+      if( props.record.rooms != undefined && props.record.rooms.length > 0 ) {
+        selectedRoom.value = props.record.rooms[0].id
+      } else {
+        selectedRoom.value = null
       }
       today.value = props.record.date ? new Date( props.record.date ) : new Date()
       meetingDateTime.year = parseInt( dateFormat( today.value , 'yyyy') ) ,
@@ -381,6 +455,8 @@ export default {
       selectedType ,
       organizations ,
       selectedOrganization ,
+      rooms ,
+      selectedRoom ,
       meetingDateTime ,
       /**
        * Functions

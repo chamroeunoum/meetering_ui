@@ -28,6 +28,7 @@ import ScheduleMeetingTV1Component from '../layouts/welcome/template1.vue'
 import ScheduleMeetingTV2Component from '../layouts/welcome/template2.vue'
 import ScheduleMeetingTV3Component from '../layouts/welcome/template3.vue'
 import ScheduleMeetingTV4Component from '../layouts/welcome/template4.vue'
+import ScheduleMeetingTVXComponent from '../layouts/welcome/templatex.vue'
 
 // User management
 import UserComponent from '../components/user/index.vue'
@@ -83,6 +84,11 @@ import MeetingThumbnailComponent from '../components/meeting/crud/lists/thumbnai
 import MeetingDetailComponent from '../components/meeting/crud/lists/detail.vue'
 import DraftViewerComponent from '../components/meeting/crud/lists/draft-viewer.vue'
 import DraftTimelineComponent from '../components/meeting/crud/lists/timeline.vue'
+import MeetingScheduleComponent from '../components/meeting/crud/lists/schedule.vue'
+
+// People management
+import PeopleComponent from '../components/people/index.vue'
+import PeopleListComponent from '../components/people/list.vue'
 
 // Error page
 import Page404 from '../components/errors/404.vue'
@@ -172,6 +178,11 @@ function getAuthenticatedRoutes() {
               name: 'DraftTimeline',
               path: ':meeting_id/timeline',
               component: DraftTimelineComponent,
+            },
+            {
+              name: 'MeetingSchedule',
+              path: 'schedule',
+              component: MeetingScheduleComponent,
             },
           ],
         },
@@ -281,6 +292,21 @@ function getAuthenticatedRoutes() {
           ],
         },
 
+        // ── People ────────────────────────────────────────────────────────
+        {
+          name: 'People',
+          path: 'people',
+          component: PeopleComponent,
+          meta: { transition: 'slide-right', requiresAuth: true },
+          children: [
+            {
+              name: 'PeopleList',
+              path: '',
+              component: PeopleListComponent,
+            },
+          ],
+        },
+
         // ── User Profile ───────────────────────────────────────────────
         {
           name: 'UserProfile',
@@ -318,6 +344,11 @@ function getAuthenticatedRoutes() {
           name: 'ScheduleMeetingTV4',
           path: 'tvtemplate4',
           component: ScheduleMeetingTV4Component,
+        },
+        {
+          name: 'ScheduleMeetingTVX',
+          path: 'tvtemplatex',
+          component: ScheduleMeetingTVXComponent,
         },
 
         // ── Officer Card ───────────────────────────────────────────────
@@ -391,6 +422,11 @@ function getUnauthenticatedRoutes() {
       name: 'ScheduleMeetingTV4',
       path: '/tvtemplate4',
       component: ScheduleMeetingTV4Component,
+    },
+    {
+      name: 'ScheduleMeetingTVX',
+      path: '/tvtemplatex',
+      component: ScheduleMeetingTVXComponent,
     },
 
     // ── Officer Card (public) ──────────────────────────────────────────

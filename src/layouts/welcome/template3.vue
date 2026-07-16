@@ -339,12 +339,13 @@ export default {
         for( let i = 0 ; i < responseRecords.length; i++ ){
           responseRecords[i].status == 2 ? meetingRecords.value.push( responseRecords[i] ) : false
         }
-        full_date.value = responseRecords[0].full_date
+        full_date.value = responseRecords.length > 0 ? responseRecords[0].full_date : ''
+        schedulePages.value = []
         for (let i = 0; i < responseRecords.length; i += recordsPerSchedulePage.value ) {
           schedulePages.value.push( responseRecords.slice(i, recordsPerSchedulePage.value + i) )
         }
         activePage.value = 0
-        records.value = schedulePages.value[ activePage.value ]
+        records.value = schedulePages.value.length > 0 ? schedulePages.value[activePage.value] : []
         activateSlide()
       }
     }
@@ -417,6 +418,7 @@ export default {
       activePage ,
       recordsPerSchedulePage ,
       full_date ,
+      errorGetScheduleMeeting ,
       statuses ,
       meetingRecords ,
       windowHeight ,

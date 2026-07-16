@@ -16,7 +16,7 @@
             class="dashboard-card cursor-pointer border-l-4 border-blue-500">
             <div class="flex items-center justify-between">
               <div>
-                <div class="text-xs text-muted">គណនីអ្នកប្រើប្រាស់</div>
+                <div class="text-xs text-muted">អ្នកប្រើប្រាស់</div>
                 <div class="text-2xl font-bold text-blue-600">{{ summary.users }}</div>
               </div>
               <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -84,7 +84,29 @@
       </div>
 
       <!-- Section: Charts Row -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+
+        <!-- Section: Meetings by Month -->
+        <div class="mb-6" v-if="meetingsByMonth.length > 0">
+          <div class="bg-card rounded-lg border border-default p-4">
+            <div class="font-moul text-sm text-secondary mb-3">កិច្ចប្រជុំប្រចាំខែ</div>
+            <div class="space-y-2">
+              <template v-for="(item, idx) in meetingsByMonth" :key="idx">
+                <div v-if="item && item.count > 0" class="flex items-center gap-2">
+                  <div class="w-16 text-xs text-secondary truncate">{{ item.label || '' }}</div>
+                  <div class="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-700"
+                      :class="monthColors[idx % monthColors.length]"
+                      :style="{ width: monthBarWidth(item.count ?? 0) + '%' }">
+                    </div>
+                  </div>
+                  <div class="text-xs font-semibold text-primary w-10 text-right">{{ item.count ?? 0 }}</div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+        
         <!-- Meetings by Type -->
         <div class="bg-card rounded-lg border border-default p-4">
           <div class="font-moul text-sm text-secondary mb-3">កិច្ចប្រជុំតាមប្រភេទ</div>
@@ -130,6 +152,10 @@
             </div>
           </div>
         </div>
+
+        
+
+
       </div>
 
       <!-- Section: Meetings by Organization -->
@@ -154,6 +180,91 @@
         </div>
       </div>
 
+      <!-- Section: Meetings by Room -->
+      <div class="mb-6" v-if="meetingsByRoom.length > 0">
+        <div class="bg-card rounded-lg border border-default p-4">
+          <div class="font-moul text-sm text-secondary mb-3">កិច្ចប្រជុំតាមបន្ទប់</div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <template v-for="(item, idx) in meetingsByRoom" :key="idx">
+              <div v-if="item" class="rounded-lg border border-default p-4 text-center">
+                <div class="text-xs text-muted mb-1 truncate">{{ item.name || '' }}</div>
+                <div class="text-2xl font-bold" :class="roomColors[idx % roomColors.length]">{{ item.count ?? 0 }}</div>
+                <div class="text-xs text-muted mt-1">កិច្ចប្រជុំ</div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Document Statistics -->
+      <div class="mb-6" v-if="meetingsDocumentsStats.length > 0">
+        <div class="bg-card rounded-lg border border-default p-4">
+          <div class="font-moul text-sm text-secondary mb-3">ឯកសារភ្ជាប់នឹងកិច្ចប្រជុំ</div>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+            <template v-for="(item, idx) in meetingsDocumentsStats" :key="idx">
+              <div v-if="item" class="rounded-lg border border-default p-3 text-center">
+                <div class="text-xl font-bold" :class="docTextColors[idx % docTextColors.length]">{{ item.count ?? 0 }}</div>
+                <div class="text-xs text-muted truncate mt-1" :title="item.label || ''">{{ item.label || '' }}</div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Section: PDF Files Overview -->
+      <div class="mb-6" v-if="meetingsPdfTotal.length > 0">
+        <div class="bg-card rounded-lg border border-default p-4">
+          <div class="font-moul text-sm text-secondary mb-3">ចំនួនឯកសារ PDF សរុប</div>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <template v-for="(item, idx) in meetingsPdfTotal" :key="idx">
+              <div v-if="item" class="rounded-lg border border-default p-3 text-center">
+                <div class="text-xs text-muted mb-1 truncate" :title="item.label || ''">{{ item.label || '' }}</div>
+                <div class="text-xl font-bold" :class="pdfColors[idx % pdfColors.length]">{{ item.count ?? 0 }}</div>
+                <div class="text-xs text-muted mt-1">ឯកសារ</div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Meeting Schedule (Slideshow) -->
+      <!-- <div class="mb-6" v-if="tvSchedule.length > 0">
+        <div class="bg-card rounded-lg border border-default p-4">
+          <div class="font-moul text-sm text-secondary mb-3 flex items-center justify-between">
+            <span>កាលវិភាគកិច្ចប្រជុំ</span>
+            <div class="flex items-center gap-2">
+              <span class="text-xxs text-muted">{{ tvCurrentPage + 1 }} / {{ tvSchedule.length }}</span>
+              <n-button size="tiny" quaternary @click="tvPrev" class="!p-0.5"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></n-button>
+              <n-button size="tiny" quaternary @click="tvNext" class="!p-0.5"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></n-button>
+            </div>
+          </div>
+          <Transition name="tv-slide" mode="out-in">
+            <div :key="tvCurrentPage" class="tv-dash-card">
+              <div class="flex items-start gap-3">
+                <div class="tv-dash-num">{{ tvCurrentPage + 1 }}</div>
+                <div class="flex-1 min-w-0">
+                  <div class="tv-dash-obj">{{ tvSchedule[tvCurrentPage].objective }}</div>
+                  <div class="tv-dash-leaders">
+                    <span v-for="(lm, li) in (tvSchedule[tvCurrentPage].listMembers || []).slice(0, 3)" :key="li">
+                      {{ li > 0 ? " · " : "" }}{{ lm.member.lastname }} {{ lm.member.firstname }}
+                    </span>
+                    <span v-if="tvSchedule[tvCurrentPage].listMembers && tvSchedule[tvCurrentPage].listMembers.length > 3" class="tv-dash-more"> +{{ tvSchedule[tvCurrentPage].listMembers.length - 3 }}</span>
+                  </div>
+                </div>
+                <div class="tv-dash-meta text-right flex-none">
+                  <div class="tv-dash-date">{{ tvSchedule[tvCurrentPage].date ? dateFormat(new Date(tvSchedule[tvCurrentPage].date), "dd-mm-yyyy") : "" }}</div>
+                  <div class="tv-dash-time">{{ tvSchedule[tvCurrentPage].start }}{{ tvSchedule[tvCurrentPage].end ? " - " + tvSchedule[tvCurrentPage].end : "" }}</div>
+                  <div class="tv-dash-status">
+                    <span class="inline-block px-1.5 py-0.5 rounded text-xxs font-bold" :class="getTvStatusClass(tvSchedule[tvCurrentPage].status)">{{ getTvStatusLabel(tvSchedule[tvCurrentPage].status) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </div> -->
+
       <!-- Section: Quick Access -->
       <!-- <div class="mb-6">
         <div class="font-moul text-sm text-secondary mb-3 px-2">ច្រកចូលរហ័ស</div>
@@ -174,6 +285,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
+import dateFormat from 'dateformat'
 
 export default {
   name: 'Dashboard',
@@ -193,8 +305,35 @@ export default {
     const meetingsByType = computed(() => store.state.dashboard.meetingsByType)
     const meetingsByStatus = computed(() => store.state.dashboard.meetingsByStatus)
     const meetingsByOrganization = computed(() => store.state.dashboard.meetingsByOrganization)
+    const meetingsByRoom = computed(() => store.state.dashboard.meetingsByRoom)
+    const meetingsDocumentsStats = computed(() => store.state.dashboard.meetingsDocumentsStats)
+    const meetingsByMonth = computed(() => store.state.dashboard.meetingsByMonth)
+    const meetingsPdfTotal = computed(() => store.state.dashboard.meetingsPdfTotal)
     const taskStats = computed(() => store.state.dashboard.taskStats)
     const loading = computed(() => store.state.dashboard.loading)
+
+    // ─── TV Schedule widget ────────────────────────────────────────────
+    const tvSchedule = ref([])
+    const tvCurrentPage = ref(0)
+    let tvInterval = null
+    const tvStatuses = [
+      { label: 'មិនទាន់ប្រជុំ', value: 1, color: 'bg-yellow-100 text-yellow-700' },
+      { label: 'កំពុងប្រជុំ', value: 2, color: 'bg-green-100 text-green-700' },
+      { label: 'នៅបន្ត', value: 4, color: 'bg-blue-100 text-blue-700' },
+      { label: 'ប្ដូរ', value: 8, color: 'bg-pink-100 text-pink-700' },
+      { label: 'ពន្យាពេល', value: 16, color: 'bg-brown-100 text-brown-700' },
+      { label: 'ចប់', value: 32, color: 'bg-gray-100 text-gray-700' },
+    ]
+    function getTvStatusClass(val) { const s = tvStatuses.find(st => st.value === val); return s ? s.color : 'bg-gray-100' }
+    function getTvStatusLabel(val) { const s = tvStatuses.find(st => st.value === val); return s ? s.label : '' }
+    function tvNext() { tvCurrentPage.value = (tvCurrentPage.value + 1) % tvSchedule.value.length; resetTvInterval() }
+    function tvPrev() { tvCurrentPage.value = (tvCurrentPage.value - 1 + tvSchedule.value.length) % tvSchedule.value.length; resetTvInterval() }
+    function resetTvInterval() { if (tvInterval) clearInterval(tvInterval); tvInterval = setInterval(() => { tvCurrentPage.value = (tvCurrentPage.value + 1) % tvSchedule.value.length }, 6000) }
+    function fetchTvSchedule() {
+      store.dispatch('meeting/scheduleOnTv', { page: 1, perPage: 100, search: '' })
+        .then(res => { if (res.data?.records) { tvSchedule.value = res.data.records.slice(0, 12); tvCurrentPage.value = 0; resetTvInterval() } })
+        .catch(() => { tvSchedule.value = [] })
+    }
 
     // ─── Chart helpers
 
@@ -225,6 +364,45 @@ export default {
       'bg-rose-400', 'bg-lime-400', 'bg-sky-400',
       'bg-fuchsia-400', 'bg-emerald-400'
     ]
+
+    const roomColors = [
+      'text-blue-600', 'text-green-600', 'text-purple-600',
+      'text-orange-600', 'text-cyan-600', 'text-pink-600'
+    ]
+
+    const docColors = [
+      'bg-red-400', 'bg-amber-400', 'bg-blue-400',
+      'bg-green-400', 'bg-purple-400'
+    ]
+
+    const monthColors = [
+      'bg-indigo-400', 'bg-blue-400', 'bg-cyan-400',
+      'bg-teal-400', 'bg-green-400', 'bg-lime-400',
+      'bg-yellow-400', 'bg-amber-400', 'bg-orange-400',
+      'bg-red-400', 'bg-pink-400', 'bg-purple-400'
+    ]
+
+    const pdfColors = [
+      'text-red-600', 'text-amber-600', 'text-blue-600',
+      'text-green-600', 'text-purple-600'
+    ]
+
+    const docTextColors = [
+      'text-red-600', 'text-amber-600', 'text-blue-600',
+      'text-green-600', 'text-purple-600'
+    ]
+
+    function docBarWidth(count) {
+      const total = meetingsDocumentsStats.value.find(m => m.type === 'total')?.count || 1
+      return Math.max((count / total) * 100, 2)
+    }
+
+    function monthBarWidth(count) {
+      const all = meetingsByMonth.value
+      if (all.length === 0) return 0
+      const max = Math.max(...all.map(i => i.count || 0), 1)
+      return Math.max((count / max) * 100, 2)
+    }
 
     function statusLabel(status) {
       const map = {
@@ -282,6 +460,7 @@ export default {
 
     onMounted(() => {
       store.dispatch('dashboard/fetchSummary')
+      fetchTvSchedule()
     })
 
     return {
@@ -291,12 +470,26 @@ export default {
       meetingsByType,
       meetingsByStatus,
       meetingsByOrganization,
+      meetingsByRoom,
+      meetingsDocumentsStats,
+      meetingsByMonth,
+      meetingsPdfTotal,
       taskStats,
       loading,
+      dateFormat,tvSchedule,tvCurrentPage,tvNext,tvPrev,
+      getTvStatusClass,
+      getTvStatusLabel,
       barWidth,
       barColors,
       statusColors,
       orgColors,
+      roomColors,
+      docColors,
+      monthColors,
+      pdfColors,
+      docBarWidth,
+      monthBarWidth,
+      docTextColors,
       statusLabel,
       quickLinks
     }

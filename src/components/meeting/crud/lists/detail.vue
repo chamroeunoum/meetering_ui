@@ -1,7 +1,7 @@
 <template>
-  <div class="meeting-detail-page font-ktr ">
+  <div class="meeting-detail-page font-ktr relative ">
     <Transition name="fade">
-      <div v-if="loading" class="flex items-center justify-center h-64">
+      <div v-if="loading" class="absolute left-0 top-0 right-0 bottom-0 flex items-center justify-center h-64">
         <div class="spinner text-center">
           <svg class="animate-spin w-12 mx-auto text-blue-500" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512"><path d="M304 48c0 26.51-21.49 48-48 48s-48-21.49-48-48s21.49-48 48-48s48 21.49 48 48zm-48 368c-26.51 0-48 21.49-48 48s21.49 48 48 48s48-21.49 48-48s-21.49-48-48-48zm208-208c-26.51 0-48 21.49-48 48s21.49 48 48 48s48-21.49 48-48s-21.49-48-48-48zM96 256c0-26.51-21.49-48-48-48S0 229.49 0 256s21.49 48 48 48s48-21.49 48-48zm12.922 99.078c-26.51 0-48 21.49-48 48s21.49 48 48 48s48-21.49 48-48c0-26.509-21.491-48-48-48zm294.156 0c-26.51 0-48 21.49-48 48s21.49 48 48 48s48-21.49 48-48c0-26.509-21.49-48-48-48zM108.922 60.922c-26.51 0-48 21.49-48 48s21.49 48 48 48s48-21.49 48-48s-21.491-48-48-48z" fill="currentColor"></path></svg>
           <br/><br/><span class="">កំពុងអាន...</span>
@@ -25,7 +25,16 @@
             <div class="flex-1 min-w-0 mr-4">
               <h1 class="font-moul text-xl leading-relaxed">{{ record.objective || 'គ្មានចំណងជើង' }}</h1>
             </div>
-            <div class="flex-none">
+            <div class="flex-none flex items-center gap-2">
+              <n-button size="tiny" quaternary @click="showEditModal = true" class="!p-1">
+                <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </n-button>
+              <n-button size="tiny" :type="record.active ? 'warning' : 'primary'" @click="togglePublish(record)" class="!p-1">
+                <template #icon>
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                </template>
+                <span class="text-xs">{{ record.active ? 'ឈប់ផ្សាយ' : 'ផ្សាយ' }}</span>
+              </n-button>
               <span v-if="record.type" class="inline-block px-3 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-700 border border-blue-200">{{ record.type.name }}</span>
             </div>
           </div>
@@ -271,9 +280,9 @@
                 </n-modal>
 
                 <!-- ═══ Print Preview Modal ═══ -->
-                <n-modal v-model:show="showPrintPreview" preset="card" title="បោះពុម្ពស្លាកឈ្មោះ" style="max-width:820px" :mask-closable="true" class="print-preview-modal">
+                <n-modal v-model:show="showPrintPreview" preset="card" title="បោះពុម្ពស្លាកឈ្មោះ" style="max-width:95vw" :mask-closable="true" class="print-preview-modal">
                   <div class="flex items-center justify-between mb-4">
-                    <div class="text-sm ">ស្លាកឈ្មោះចំនួន {{ nameCardItems.length }} នាក់ · ទំហំក្រដាស A4</div>
+                    <div class="text-xs text-gray-500">ស្លាកឈ្មោះចំនួន {{ nameCardItems.length }} នាក់ · {{ record?.objective || 'កិច្ចប្រជុំ' }} · {{ record?.date ? formatDate(record.date) : '' }} {{ record?.start && record?.end ? record.start + '-' + record.end : '' }} {{ record?.rooms?.length ? record.rooms.map(r=>r.name).join(', ') : '' }}</div>
                     <n-button type="primary" size="small" @click="handlePrint">
                       <template #icon><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M6 7V3h12v4h2.75A3.25 3.25 0 0 1 24 10.25v6.5A3.25 3.25 0 0 1 20.75 20H18v1.5H6V20H3.25A3.25 3.25 0 0 1 0 16.75v-6.5A3.25 3.25 0 0 1 3.25 7H6zm13.25 1.5H3.25A1.75 1.75 0 0 0 1.5 10.25v6.5c0 .966.784 1.75 1.75 1.75h18.5a1.75 1.75 0 0 0 1.75-1.75v-6.5a1.75 1.75 0 0 0-1.75-1.75H19.25zM7.5 3v4h9V3h-9zm9.75 13a.75.75 0 0 0 0-1.5h-10.5a.75.75 0 0 0 0 1.5h10.5z" fill="currentColor"></path></g></svg></template>
                       បោះពុម្ព
@@ -282,29 +291,34 @@
 
                   <!-- Name cards grid - A4 layout -->
                   <div id="name-card-print-area" class="name-card-print-area">
-                    <!-- Meeting header -->
-                    <div class="print-header print-only-preview">
-                      <div class="print-header-title">{{ record?.objective || 'កិច្ចប្រជុំ' }}</div>
-                      <div class="print-header-meta">
-                        {{ record?.date ? formatDate(record.date) : '' }}
-                        {{ record?.start && record?.end ? ' · ' + record.start + ' - ' + record.end : '' }}
-                        {{ record?.rooms?.length ? ' · ' + record.rooms.map(r=>r.name).join(', ') : '' }}
-                      </div>
-                    </div>
-
                     <div v-if="nameCardItems.length === 0" class="text-center text-gray-400 py-12">មិនទាន់មានការកំណត់កៅអីនៅឡើយទេ។</div>
 
                     <!-- Group by role -->
                     <template v-for="(group, gIdx) in groupedNameCards" :key="gIdx">
                       <div class="print-group-header">{{ group.label }} ({{ group.items.length }})</div>
                       <div class="name-card-grid">
-                        <div v-for="item in group.items" :key="item.seat_id" class="name-card">
+                        <div v-for="item in group.items" :key="item.seat_id" class="name-card" :class="item.organization_logo ? 'has-logo' : 'no-logo'">
                           <div class="name-card-seat">{{ item.seat_number }}</div>
-                          <div class="name-card-body flex flex-wrap">
-                            <div v-if="item" class="name-card-courtesy font-moul">{{ item?.member?.courtesy }}</div>
-                            <div class="name-card-name font-moul">{{ item?.member?.lastname + ' ' + item?.member?.firstname }}</div>
-                            <div class="name-card-title">{{ item.position }}</div>
-                            <div class="name-card-org">{{ item.organization }}</div>
+                          <!-- Left column: Organization logo (only if exists) -->
+                          <div v-if="item.organization_logo" class="name-card-logo-col">
+                            <div class="name-card-logo">
+                              <svg viewBox="0 0 100 100" class="w-full h-full">
+                                <rect x="5" y="20" width="90" height="60" rx="5" fill="none" stroke="#333" stroke-width="2"/>
+                                <path d="M20 20V10h60v10" fill="none" stroke="#333" stroke-width="2"/>
+                                <rect x="30" y="35" width="40" height="30" rx="3" fill="none" stroke="#333" stroke-width="1.5"/>
+                                <circle cx="50" cy="45" r="10" fill="none" stroke="#333" stroke-width="1.5"/>
+                                <path d="M40 55 Q50 60 60 55" fill="none" stroke="#333" stroke-width="1.5"/>
+                                <text x="50" y="78" text-anchor="middle" font-size="6" fill="#333">{{ (item.organization || '').substring(0,12) }}</text>
+                              </svg>
+                            </div>
+                          </div>
+                          <!-- Right column: Name + Position (full width when no logo) -->
+                          <div class="name-card-info-col" :class="item.organization_logo ? '' : 'full-width'">
+                            <div class="name-card-name font-moul mt-4">{{ item?.member?.lastname + ' ' + item?.member?.firstname }}</div>
+                            <div class="name-card-bottom">
+                              <div class="name-card-position font-moul mb-2">{{ item.position }}</div>
+                              <div class="name-card-org font-moul">{{ item.organization }}</div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -314,38 +328,120 @@
 
                 <div class="flex items-center justify-between mb-4">
                   <h3 class="font-moul text-lg ">បញ្ជីអ្នកចូលរួម ({{ record.listMembers?record.listMembers.length:0 }} នាក់)</h3>
-                  <n-button size="small" secondary @click="showMemberModal = true">
-                    <template #icon><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><g fill="none"><path d="M8.75 3.75a2.75 2.75 0 1 0-5.5 0a2.75 2.75 0 0 0 5.5 0zm-4.5 0a1.75 1.75 0 1 1 3.5 0a1.75 1.75 0 0 1-3.5 0zM2.5 7.5h4.183c-.164.31-.286.646-.358 1H2.5A.5.5 0 0 0 2 9v.5c0 1.26 1.099 2.614 3.096 2.93c-.322.22-.59.513-.781.854C2.205 12.713 1 11.087 1 9.5V9a1.5 1.5 0 0 1 1.5-1.5zm5.379 0c.504-.61 1.267-1 2.121-1a2.744 2.744 0 0 1 2.646 2a2.753 2.753 0 0 1-3.893 3.202A2.75 2.75 0 0 1 7.88 7.5zm.54 1a1.75 1.75 0 1 0 3.164 1.5a1.75 1.75 0 0 0-3.165-1.5zm7.266 4.784a2.513 2.513 0 0 0-.781-.853C16.9 12.114 18 10.759 18 9.5V9a.5.5 0 0 0-.5-.5h-3.825a3.726 3.726 0 0 0-.357-1H17.5A1.5 1.5 0 0 1 19 9v.5c0 1.587-1.206 3.212-3.315 3.784zm-1.198.087c-.264-.231-.609-.371-.987-.371h-7A1.496 1.496 0 0 0 5 14.5v.5c0 1.971 1.86 4 5 4c3.14 0 5-2.029 5-4v-.5c0-.45-.198-.854-.513-1.13zM6 14.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v.5c0 1.438-1.432 3-4 3s-4-1.562-4-3v-.5zM14 1a2.75 2.75 0 1 1 0 5.5A2.75 2.75 0 0 1 14 1zm0 1a1.75 1.75 0 1 0 0 3.5A1.75 1.75 0 0 0 14 2z" fill="currentColor"></path></g></svg></template>
-                    គ្រប់គ្រង
-                  </n-button>
                 </div>
-                <div v-if="!record.listMembers||record.listMembers.length===0" class="text-center text-gray-400 py-8">មិនមានសមាសភាពអង្គប្រជុំ</div>
-                <div v-else class="overflow-x-auto">
-                  <table class="w-full border-collapse">
-                    <thead class="print-hide"><tr class=" text-left"><th class="p-3 text-sm border-b border-gray-200 w-12">ល.រ</th><th class="p-3 text-sm border-b border-gray-200 w-16">កៅអី</th><th class="p-3 text-sm border-b border-gray-200">ឈ្មោះ</th><th class="p-3 text-sm border-b border-gray-200">តួនាទី</th><th class="p-3 text-sm border-b border-gray-200">ក្រុម</th><th class="p-3 text-sm border-b border-gray-200">វត្តមាន</th></tr></thead>
-                    <tbody>
-                      <tr v-for="(lm,index) in record.listMembers" :key="lm.id||index" class="border-b border-gray-100 ">
-                        <td class="p-3">{{ index+1 }}</td>
-                        <td class="p-3">
-                          <span v-if="lm.seat" class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold" :class="seatBadgeClass(lm)">{{ lm.seat }}</span>
-                          <span v-else class="text-gray-300">{{  lm.room_seat_id }}</span>
-                        </td>
-                        <td class="p-3 text-left ">
-                          <div class="font-bold ">
-                            <template v-if="lm.member">
-                              <template v-if="lm.member.officers&&lm.member.officers.length">{{ lm.member.officers.map(o=>(o.countesy?o.countesy.name+' ':'')) }}{{ lm.member.lastname }} {{ lm.member.firstname }}</template>
-                              <template v-else>{{ lm.member.lastname }} {{ lm.member.firstname }}</template>
-                            </template>
-                            <template v-else>មិនស្គាល់</template>
-                          </div>
-                          <div v-if="lm.member&&lm.member.organizations&&lm.member.organizations.length" class="text-xs ">{{ lm.member.organizations.map(o=>o.name).join(', ') }}</div>
-                        </td>
-                        <td class="p-3 text-left "><span :class="roleClass(lm.role)" class="px-2 py-0.5 rounded text-xs font-bold">{{ roleLabel(lm.role) }}</span></td>
-                        <td class="p-3 text-left "><span :class="groupClass(lm.group)" class="px-2 py-0.5 rounded text-xs font-bold">{{ groupLabel(lm.group) }}</span></td>
-                        <td class="p-3 text-left "><span v-if="lm.attendant" class=" font-bold text-xs"><template v-if="lm.attendant.people_id==lm.member.id">មកផ្ទាល់</template><template v-else>ជំនួសដោយ {{ lm.attendant.member?lm.attendant.member.lastname+' '+lm.attendant.member.firstname:'' }}</template></span><span v-else class="text-red-500 text-xs">អវត្តមាន</span></td>
-                      </tr>
-                    </tbody>
-                  </table>
+                <div class="flex gap-0">
+                  <!-- Left: Search + People list -->
+                  <div class="flex-none border border-gray-200 rounded-lg bg-white overflow-hidden" :style="{ width: memberPanelWidth + 'px' }">
+                    <div class="p-2 border-b border-gray-200 flex gap-1">
+                      <n-input v-model:value="inlineMemberSearch" placeholder="ស្វែងរក..." clearable size="small" @update:value="onSearchInput" class="flex-1" />
+                      <n-button size="tiny" type="primary" @click="toggleAddForm">
+                        <template #icon><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></template>
+                        <span class="text-xs">ថ្មី</span>
+                      </n-button>
+                    </div>
+                    <div v-if="inlineSearchResults.length > 0" class="overflow-y-auto" style="max-height: 400px;">
+                      <div v-for="(p,i) in inlineSearchResults" :key="'sr'+i"
+                        class="flex items-center gap-2 px-3 py-2 border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors"
+                        @click="addMemberToMeeting(p)">
+                        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-none text-xs font-bold">{{ (p.lastname||'?').charAt(0) }}</div>
+                        <div class="flex-1 min-w-0">
+                          <div class="text-sm font-bold truncate">{{ p.lastname }} {{ p.firstname }}</div>
+                          <div class="text-xs text-gray-500 truncate">{{ p.mobile_phone || '' }}{{ p.mobile_phone && p.email ? ' · ' : '' }}{{ p.email || '' }}</div>
+                        </div>
+                        <svg class="w-5 h-5 text-green-500 flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+                      </div>
+                    </div>
+                    <div v-else-if="inlineMemberSearch && inlineSearchResults.length === 0" class="text-center text-gray-400 py-8 text-sm">
+                      រកមិនឃើញ
+                    </div>
+                    <div v-else class="text-center text-gray-400 py-8 text-sm">
+                      សូមវាយបញ្ចូលឈ្មោះដើម្បីស្វែងរក
+                    </div>
+                    <!-- Add new person modal -->
+                    <n-modal v-model:show="showAddPersonForm" preset="card" title="បន្ថែមសមាជិកថ្មី" style="max-width:500px" :mask-closable="true">
+                      <n-form size="small" label-placement="top">
+                        <n-form-item label="ងារ">
+                          <n-select v-model:value="newPerson.countesy" :options="countesyOptions" filterable placeholder="ជ្រើសរើសងារ" />
+                        </n-form-item>
+                        <n-form-item label="គោត្តនាម" required>
+                          <n-input v-model:value="newPerson.lastname" placeholder="គោត្តនាម" />
+                        </n-form-item>
+                        <n-form-item label="នាមខ្លួន" required>
+                          <n-input v-model:value="newPerson.firstname" placeholder="នាមខ្លួន" />
+                        </n-form-item>
+                        <n-form-item label="ភេទ">
+                          <n-select v-model:value="newPerson.gender" :options="[{label:'ប្រុស',value:1},{label:'ស្រី',value:0}]" />
+                        </n-form-item>
+                        <n-form-item label="ទូរស័ព្ទ">
+                          <n-input v-model:value="newPerson.phone" placeholder="លេខទូរស័ព្ទ" />
+                        </n-form-item>
+                        <n-form-item label="អ៊ីមែល">
+                          <n-input v-model:value="newPerson.email" placeholder="អ៊ីមែល" />
+                        </n-form-item>
+                        <n-form-item label="តួនាទី">
+                          <n-select v-model:value="newPerson.position" :options="positionOptions" filterable placeholder="ជ្រើសរើសតួនាទី" />
+                        </n-form-item>
+                        <n-form-item label="ក្រសួង ស្ថាប័ន">
+                          <n-select v-model:value="newPerson.organization" :options="organizationOptions" filterable placeholder="ជ្រើសរើសស្ថាប័ន" />
+                        </n-form-item>
+                        <n-button type="primary" size="small" block @click="saveNewPerson" :disabled="!newPerson.lastname || !newPerson.firstname">
+                          រក្សាទុក និងបន្ថែម
+                        </n-button>
+                      </n-form>
+                    </n-modal>
+                  </div>
+                  <!-- Draggable divider -->
+                  <div class="w-2 flex-none cursor-col-resize flex items-center justify-center select-none hover:bg-blue-100 active:bg-blue-200 transition-colors"
+                    @mousedown.prevent="startResizePanel">
+                    <div class="w-0.5 h-8 bg-gray-300 rounded"></div>
+                  </div>
+                  <!-- Right: Participants table -->
+                  <div class="flex-1 min-w-0">
+                    <div v-if="!record.listMembers||record.listMembers.length===0" class="text-center text-gray-400 py-8">មិនមានសមាសភាពអង្គប្រជុំ</div>
+                    <div v-else class="overflow-x-auto">
+                      <table class="w-full border-collapse">
+                        <thead class="print-hide"><tr class=" text-left"><th class="p-3 text-sm border-b border-gray-200 w-12">ល.រ</th><th class="p-3 text-sm border-b border-gray-200 w-16">កៅអី</th><th class="p-3 text-sm border-b border-gray-200">ឈ្មោះ</th><th class="p-3 text-sm border-b border-gray-200">តួនាទី</th><th class="p-3 text-sm border-b border-gray-200">ក្រុម</th><th class="p-3 text-sm border-b border-gray-200">វត្តមាន</th><th class="p-3 text-sm border-b border-gray-200 w-10"></th></tr></thead>
+                        <tbody>
+                          <tr v-for="(lm,index) in record.listMembers" :key="lm.id||index" class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="p-3">{{ index+1 }}</td>
+                            <td class="p-3">
+                              <span v-if="lm.seat" class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold" :class="seatBadgeClass(lm)">{{ lm.seat }}</span>
+                              <span v-else class="text-gray-300">{{ lm.room_seat_id || '—' }}</span>
+                            </td>
+                            <td class="p-3 text-left">
+                              <div class="font-bold text-sm">
+                                <template v-if="lm.member">
+                                  <template v-if="lm.member.officers&&lm.member.officers.length">{{ lm.member.officers.map(o=>(o.countesy?o.countesy.name+' ':'')) }}{{ lm.member.lastname }} {{ lm.member.firstname }}</template>
+                                  <template v-else>{{ lm.member.lastname }} {{ lm.member.firstname }}</template>
+                                </template>
+                                <template v-else>មិនស្គាល់</template>
+                              </div>
+                              <div v-if="lm.member&&lm.member.organizations&&lm.member.organizations.length" class="text-xs text-gray-500">{{ lm.member.organizations.map(o=>o.name).join(', ') }}</div>
+                            </td>
+                            <td class="p-3 text-left">
+                              <n-select v-model:value="lm.role" :options="roleOptions" size="tiny" @update:value="updateMemberGroupAndRole(lm)" class="w-28" />
+                            </td>
+                            <td class="p-3 text-left">
+                              <n-select v-model:value="lm.group" :options="groupOptions" size="tiny" @update:value="updateMemberGroupAndRole(lm)" class="w-32" />
+                            </td>
+                            <td class="p-3 text-left">
+                              <n-popselect :value="attendantValue(lm)" :options="attendantOptions(lm)" size="small" trigger="click" @update:value="(val)=>updateAttendant(lm,val)">
+                                <n-button size="tiny" quaternary :type="attendantType(lm)">
+                                  <template #icon><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></template>
+                                  {{ attendantLabel(lm) }}
+                                </n-button>
+                              </n-popselect>
+                            </td>
+                            <td class="p-3 text-center">
+                              <n-button size="tiny" quaternary type="error" @click="removeMemberFromMeeting(lm)" class="!p-0">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                              </n-button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
               </div>
             </n-tab-pane>
@@ -492,53 +588,61 @@
             <n-tab-pane name="checklist" tab="បញ្ជីត្រួតពិនិត្យ">
               <div class="p-4 md:p-6">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <!-- Pre-Meeting Checklist -->
+                  
                   <div class="rounded-lg border border-gray-200 overflow-hidden">
                     <div class="px-4 py-3 bg-amber-50 border-b border-amber-200 flex items-center justify-between">
-                      <h3 class="font-moul text-md text-amber-800 flex items-center"><svg class="w-5 h-5 mr-2 text-amber-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM11.75 6a.75.75 0 0 1 .75.75V12h3.75a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75V6.75a.75.75 0 0 1 .75-.75z" fill="currentColor"></path></g></svg>មុនពេលប្រជុំ</h3>
-                      <span class="text-xs font-bold px-2 py-0.5 rounded-full" :class="preCheckAllDone?'bg-green-100 ':'bg-amber-100 text-amber-700'">{{ preCheckDoneCount }}/{{ preChecklist.length }}</span>
+                      <h3 class="font-moul text-md text-amber-800">មុនពេលប្រជុំ</h3>
+                      <span class="text-xs font-bold px-2 py-0.5 rounded-full" :class="preCheckAllDone?'bg-green-100':'bg-amber-100 text-amber-700'">{{ preCheckDoneCount }}/{{ preChecklist.length }}</span>
                     </div>
-                    <div class="p-4 space-y-1">
-                      <div v-if="preChecklist.length===0" class="text-gray-400 text-sm text-center py-4">មិនទាន់មានបញ្ជីត្រួតពិនិត្យ</div>
-                      <div v-for="item in preChecklist" :key="'pre'+item.id" class="flex items-center space-x-2 p-2 rounded hover:bg-gray-50 transition-colors">
-                        <n-checkbox :checked="item.is_checked" @update:checked="toggleCheck(item)" class="flex-none" />
-                        <div class="flex-1 min-w-0">
-                          <span :class="item.is_checked?'text-gray-400 line-through':''" class="text-sm font-medium">{{ item.item_name }}</span>
-                        </div>
-                        <n-tag
-                          :type="item.equipment_status === 'working' ? 'success' : 'error'"
-                          size="tiny" round
-                          @click="toggleEquipStatus(item)"
-                          class="cursor-pointer flex-none">
-                          {{ item.equipment_status === 'working' ? 'ដំណើរការ' : 'ខូច' }}
-                        </n-tag>
-                        <span v-if="item.checked_at" class="text-xs text-gray-400 flex-none w-12 text-right">{{ item.checked_at }}</span>
-                      </div>
-                    </div>
+                    <div v-if="preChecklist.length===0" class="text-gray-400 text-sm text-center py-4">មិនទាន់មានបញ្ជីត្រួតពិនិត្យ</div>
+                    <table v-else class="w-full border-collapse">
+                      <thead>
+                        <tr class="bg-gray-50 text-left">
+                          <th class="p-2 text-xs border-b w-10"></th>
+                          <th class="p-2 text-xs border-b">ឈ្មោះឧបករណ៍</th>
+                          <th class="p-2 text-xs border-b w-24">ស្ថានភាព</th>
+                          <th class="p-2 text-xs border-b w-16">ម៉ោង</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="item in preChecklist" :key="'pre'+item.id" class="hover:bg-gray-50 border-b border-gray-100">
+                          <td class="p-2 text-center"><n-checkbox :checked="item.is_checked" @update:checked="toggleCheck(item)" size="small" /></td>
+                          <td class="p-2 text-sm" :class="item.is_checked?'text-gray-400 line-through':''">{{ item.item_name }}</td>
+                          <td class="p-2">
+                            <n-tag :type="item.equipment_status === 'working' ? 'success' : 'error'" size="tiny" round @click="toggleEquipStatus(item)" class="cursor-pointer">{{ item.equipment_status === 'working' ? 'ដំណើរការ' : 'ខូច' }}</n-tag>
+                          </td>
+                          <td class="p-2 text-xs text-gray-400">{{ item.checked_at || '—' }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
-                  <!-- Post-Meeting Checklist -->
+                  
                   <div class="rounded-lg border border-gray-200 overflow-hidden">
                     <div class="px-4 py-3 bg-blue-50 border-b border-blue-200 flex items-center justify-between">
-                      <h3 class="font-moul text-md text-blue-800 flex items-center"><svg class="w-5 h-5 mr-2 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM15.78 9.28a.75.75 0 0 1 .073.977l-.073.083l-4.5 4.5a.75.75 0 0 1-.977.073l-.083-.073l-2-2a.75.75 0 0 1 .977-1.133l.083.073L10.75 13.25l3.97-3.97a.75.75 0 0 1 1.06 0z" fill="currentColor"></path></g></svg>ក្រោយពេលប្រជុំ</h3>
-                      <span class="text-xs font-bold px-2 py-0.5 rounded-full" :class="postCheckAllDone?'bg-green-100 ':'bg-blue-100 text-blue-700'">{{ postCheckDoneCount }}/{{ postChecklist.length }}</span>
+                      <h3 class="font-moul text-md text-blue-800">ក្រោយពេលប្រជុំ</h3>
+                      <span class="text-xs font-bold px-2 py-0.5 rounded-full" :class="postCheckAllDone?'bg-green-100':'bg-blue-100 text-blue-700'">{{ postCheckDoneCount }}/{{ postChecklist.length }}</span>
                     </div>
-                    <div class="p-4 space-y-1">
-                      <div v-if="postChecklist.length===0" class="text-gray-400 text-sm text-center py-4">មិនទាន់មានបញ្ជីត្រួតពិនិត្យ</div>
-                      <div v-for="item in postChecklist" :key="'post'+item.id" class="flex items-center space-x-2 p-2 rounded hover:bg-gray-50 transition-colors">
-                        <n-checkbox :checked="item.is_checked" @update:checked="toggleCheck(item)" class="flex-none" />
-                        <div class="flex-1 min-w-0">
-                          <span :class="item.is_checked?'text-gray-400 line-through':''" class="text-sm font-medium">{{ item.item_name }}</span>
-                        </div>
-                        <n-tag
-                          :type="item.equipment_status === 'working' ? 'success' : 'error'"
-                          size="tiny" round
-                          @click="toggleEquipStatus(item)"
-                          class="cursor-pointer flex-none">
-                          {{ item.equipment_status === 'working' ? 'ដំណើរការ' : 'ខូច' }}
-                        </n-tag>
-                        <span v-if="item.checked_at" class="text-xs text-gray-400 flex-none w-12 text-right">{{ item.checked_at }}</span>
-                      </div>
-                    </div>
+                    <div v-if="postChecklist.length===0" class="text-gray-400 text-sm text-center py-4">មិនទាន់មានបញ្ជីត្រួតពិនិត្យ</div>
+                    <table v-else class="w-full border-collapse">
+                      <thead>
+                        <tr class="bg-gray-50 text-left">
+                          <th class="p-2 text-xs border-b w-10"></th>
+                          <th class="p-2 text-xs border-b">ឈ្មោះឧបករណ៍</th>
+                          <th class="p-2 text-xs border-b w-24">ស្ថានភាព</th>
+                          <th class="p-2 text-xs border-b w-16">ម៉ោង</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="item in postChecklist" :key="'post'+item.id" class="hover:bg-gray-50 border-b border-gray-100">
+                          <td class="p-2 text-center"><n-checkbox :checked="item.is_checked" @update:checked="toggleCheck(item)" size="small" /></td>
+                          <td class="p-2 text-sm" :class="item.is_checked?'text-gray-400 line-through':''">{{ item.item_name }}</td>
+                          <td class="p-2">
+                            <n-tag :type="item.equipment_status === 'working' ? 'success' : 'error'" size="tiny" round @click="toggleEquipStatus(item)" class="cursor-pointer">{{ item.equipment_status === 'working' ? 'ដំណើរការ' : 'ខូច' }}</n-tag>
+                          </td>
+                          <td class="p-2 text-xs text-gray-400">{{ item.checked_at || '—' }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
@@ -548,37 +652,28 @@
             <n-tab-pane name="draft" tab="សេចក្តីព្រាង">
               <div class="p-4 md:p-6">
                 <div v-if="!legalDraft" class="text-center text-gray-400 py-12 bg-gray-50 rounded-lg border border-dashed border-default"><svg class="w-16 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M6.75 3.5A3.25 3.25 0 0 0 3.5 6.75v10.5a3.25 3.25 0 0 0 3.25 3.25h10.5a3.25 3.25 0 0 0 3.25-3.25V9.372a2.25 2.25 0 0 0-.659-1.59L15.218 3.16A2.25 2.25 0 0 0 13.628 2.5H11.5v2.25c0 1.519-1.231 2.75-2.75 2.75H6.75V3.5z" fill="currentColor"></path></g></svg><div>មិនទាន់មានសេចក្តីព្រាង</div></div>
-                <div v-else class="rounded-lg border border-gray-200 overflow-hidden">
-                  <div class="flex items-center justify-between p-4 border-b border-default">
-                    <div class="flex items-center space-x-3">
-                      <div class="w-10 h-10 border border-default rounded-lg flex items-center justify-center">
-                        <svg class="w-8 h-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M8.75 11.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5zm0 2.75a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5zm0 2.75a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5z" fill="currentColor"></path></g></svg>
-                      </div>
-                      <div>
-                        <div class="font-bold ">{{ legalDraft.title }}</div>
-                        <div class="text-xs ">v{{ legalDraft.version_number || 1 }} · {{ legalDraft.regulator || '' }}</div>
-                      </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                      <router-link :to="{name:'DraftViewer',params:{meeting_id:record.id,draft_id:record.id},query:{meeting_status:record.status,meeting_date:record.date}}" 
+                <div v-else>
+                  <!-- Combined draft viewer + PDF comment section -->
+                  <draft-pdf-section
+                    mode="embedded"
+                    :pdf-url="legalDraftPdfUrl"
+                    :docx-url="legalDraft.docx_url || ''"
+                    :editable="canCommentOnDraft"
+                    :title="legalDraft.title"
+                    :version="legalDraft.version_number || 1"
+                    :status="legalDraft.status"
+                    :regulator="legalDraft.regulator || ''"
+                    :meeting-id="record.id"
+                    :start-with-sidebar="true"
+                  />
+                  <div class="mt-3 flex justify-end">
+                    <router-link
+                      :to="{ name: 'DraftTimeline', params: { meeting_id: record.id } }"
                       class="inline-flex items-center text-sm px-3 py-1.5 rounded border border-default transition-colors"
-                      >
-                        <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zm-3.25 7a.75.75 0 0 1 .75-.75h5a.75.75 0 0 1 0 1.5h-5a.75.75 0 0 1-.75-.75zm0 3.5a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75z" fill="currentColor"></path></g></svg>បើកមើលសេចក្តីព្រាង
-                      </router-link>
-                      <router-link :to="{name:'DraftTimeline',params:{meeting_id:record.id}}" class="inline-flex items-center text-sm  px-3 py-1.5 rounded border border-default transition-colors">
-                        <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM11.75 6a.75.75 0 0 1 .75.75V12h3.75a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75V6.75a.75.75 0 0 1 .75-.75z" fill="currentColor"></path></g></svg>ប្រវត្តិកំណែ
-                      </router-link>
-                    </div>
-                  </div>
-                  <div class="p-4">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                      <div><span class="">ស្ថានភាព៖</span> <span class="font-bold ml-1" :class="legalDraft.status==='final'?'':'text-blue-400'">{{ legalDraft.status==='final'?'ចុងក្រោយ':'កំពុងដំណើរការ' }}</span></div>
-                      <div><span class="">កំណែបច្ចុប្បន្ន៖</span> <span class="font-bold ml-1">v{{ legalDraft.version_number || 1 }}</span></div>
-                      <div><span class="">គតិយុត្តយោង៖</span> <span class="font-bold ml-1">{{ legalDraft.regulator || 'មិនមាន' }}</span></div>
-                    </div>
-                    <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700" v-if="!meetingNotStarted">
-                      <svg class="w-4 h-4 inline mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM11 7a1 1 0 1 0 2 0a1 1 0 0 0-2 0zm1 3.75v5.5a.75.75 0 0 0 1.5 0v-5.5a.75.75 0 0 0-1.5 0z" fill="currentColor"></path></g></svg>កិច្ចប្រជុំបានចាប់ផ្ដើមហើយ — មិនអាចកែប្រែមតិ ឬកំណត់ចំណាំលើសេចក្តីព្រាងបានទេ។
-                    </div>
+                    >
+                      <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM11.75 6a.75.75 0 0 1 .75.75V12h3.75a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75V6.75a.75.75 0 0 1 .75-.75z" fill="currentColor"/></g></svg>
+                      ប្រវត្តិកំណែ
+                    </router-link>
                   </div>
                 </div>
               </div>
@@ -599,12 +694,12 @@
       <template #footer><div class="flex justify-end space-x-2"><n-button @click="showAgendaForm=false">បោះបង់</n-button><n-button type="primary" @click="saveAgenda" :disabled="!agendaForm.topic||!agendaForm.start_time||!agendaForm.duration">{{ editingAgendaIndex!==null?'កែប្រែ':'រក្សាទុក' }}</n-button></div></template>
     </n-modal>
 
-    <!-- Member management -->
-    <member-form
+    <!-- Edit meeting -->
+    <update-form
       v-bind:model="model"
       v-bind:record="record"
-      v-bind:show="showMemberModal"
-      :onClose="closeMemberModal"
+      v-bind:show="showEditModal"
+      :onClose="closeEditModal"
     />
   </div>
 </template>
@@ -616,6 +711,7 @@ import { useStore } from 'vuex'
 import { useMessage, useNotification } from 'naive-ui'
 import dateFormat from 'dateformat'
 import MemberForm from '../widgets/member.vue'
+import DraftPdfSection from '../widgets/draft-pdf-section.vue'
 
 // ─── Mock Data ──────────────────────────────────────────────────────────
 function getMockRecord() {
@@ -678,13 +774,159 @@ function getMockDraft() {
 
 export default {
   name:'MeetingDetailPage',
-  components: { MemberForm },
+  components: { MemberForm, DraftPdfSection },
   props:{model:{type:Object,required:true,default:()=>({name:'meeting',title:'កិច្ចប្រជុំ'})}},
   setup(props){
     const store=useStore();const route=useRoute();const message=useMessage();const notify=useNotification()
     const record=ref(null);const loading=ref(true);const error=ref(false)
+    const showEditModal = ref(false)
+    function closeEditModal(actionStatus) {
+      showEditModal.value = false
+      if (parseInt(actionStatus) > 0) fetchMeeting()
+    }
     const useMockData=ref(false)
 
+    // ─── Resizable Panel ─────────────────────────────────────────────────
+    const memberPanelWidth = ref(288)
+    function startResizePanel(e) {
+      const startX = e.clientX
+      const startWidth = memberPanelWidth.value
+      function onMouseMove(ev) {
+        const diff = ev.clientX - startX
+        memberPanelWidth.value = Math.max(160, Math.min(600, startWidth + diff))
+      }
+      function onMouseUp() {
+        document.removeEventListener('mousemove', onMouseMove)
+        document.removeEventListener('mouseup', onMouseUp)
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+      }
+      document.addEventListener('mousemove', onMouseMove)
+      document.addEventListener('mouseup', onMouseUp)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+    }
+
+    // ─── Inline Member Management ────────────────────────────────────────
+    const inlineMemberSearch = ref('')
+    const inlineSearchResults = ref([])
+    const showAddPersonForm = ref(false)
+    const newPerson = reactive({ countesy:null, lastname:'', firstname:'', gender:1, phone:'', email:'', position:null, organization:null })
+    const countesyOptions = ref([])
+    const positionOptions = ref([])
+    const organizationOptions = ref([])
+    function loadFormOptions() {
+      Promise.all([
+        store.dispatch('meetingCountesy/list', { page: 1, perPage: 200, search: '' }),
+        store.dispatch('meetingPosition/list', { page: 1, perPage: 200, search: '' }),
+        store.dispatch('meetingOrganization/list', { page: 1, perPage: 200, search: '' }),
+      ]).then(([cr, pr, or]) => {
+        if (cr.data?.records) store.commit('meetingCountesy/setAllRecords', cr.data.records)
+        if (pr.data?.records) store.commit('meetingPosition/setAllRecords', pr.data.records)
+        if (or.data?.records) store.commit('meetingOrganization/setAllRecords', or.data.records)
+        countesyOptions.value = (store.getters['meetingCountesy/records'].all || []).map(c => ({ label: c.name, value: c.id }))
+        positionOptions.value = (store.getters['meetingPosition/records'].all || []).map(p => ({ label: p.name, value: p.id }))
+        organizationOptions.value = (store.getters['meetingOrganization/records'].all || []).map(o => ({ label: o.name, value: o.id }))
+      })
+    }
+    function toggleAddForm() {
+      showAddPersonForm.value = !showAddPersonForm.value
+      if (showAddPersonForm.value) loadFormOptions()
+    }
+    function saveNewPerson() {
+      if (!newPerson.lastname || !newPerson.firstname) return
+      store.dispatch('meetingPeople/save', { countesy: newPerson.countesy, lastname: newPerson.lastname, firstname: newPerson.firstname, gender: newPerson.gender, phone: newPerson.phone, email: newPerson.email, position: newPerson.position, organization: newPerson.organization })
+        .then(res => {
+          if (res.data?.ok) {
+            const created = res.data.record || res.data.people
+            if (created && created.id) {
+              store.dispatch('meeting/toggleMeetingMember', { member: created, meeting: { id: route.params.id } })
+                .then(r => { if (r.data?.ok) { refreshParticipantTab(); showAddPersonForm.value = false; newPerson.countesy=null; newPerson.lastname=''; newPerson.firstname=''; newPerson.gender=1; newPerson.phone=''; newPerson.email=''; newPerson.position=null; newPerson.organization=null } })
+            } else { refreshParticipantTab(); showAddPersonForm.value = false }
+            message.success('បានបន្ថែម')
+          }
+        }).catch(() => { notify.error({ title:'កំហុស', description:'មានបញ្ហាក្នុងពេលរក្សាទុក' }) })
+    }
+    let searchTimer = null
+    function onSearchInput() {
+      if (searchTimer) clearTimeout(searchTimer)
+      searchTimer = setTimeout(() => {
+        const q = inlineMemberSearch.value.trim()
+        if (!q) { inlineSearchResults.value = []; return }
+        store.dispatch('meetingPeople/list', { search: q, perPage: 20, page: 1 })
+          .then(res => { inlineSearchResults.value = res.data?.records || [] })
+          .catch(() => { inlineSearchResults.value = [] })
+      }, 300)
+    }
+    function addMemberToMeeting(person) {
+      store.dispatch('meeting/toggleMeetingMember', { member: person, meeting: { id: route.params.id } })
+        .then(res => { if (res.data?.ok) { refreshParticipantTab(); inlineSearchResults.value = inlineSearchResults.value.filter(p => p.id !== person.id); inlineMemberSearch.value = ''; message.success('បានបន្ថែម') } })
+        .catch(() => { notify.error({ title:'កំហុស', description:'បញ្ហាបន្ថែមសមាជិក' }) })
+    }
+    function removeMemberFromMeeting(lm) {
+      if (!lm.member) return
+      store.dispatch('meeting/toggleMeetingMember', { member: lm.member, meeting: { id: route.params.id } })
+        .then(res => { if (res.data?.ok) { refreshParticipantTab(); message.success('បានលុប') } })
+        .catch(() => { notify.error({ title:'កំហុស', description:'បញ្ហាលុបសមាជិក' }) })
+    }
+    function updateMemberGroupAndRole(lm) {
+      store.dispatch('meeting/updateMemberGroupAndRole', { id: lm.id, role: lm.role, group: lm.group, meeting_id: parseInt(route.params.id), people_id: lm.member?.id, remark: lm.remark })
+        .then(res => { if (res.data?.ok) { refreshParticipantTab() } })
+        .catch(() => { notify.error({ title:'កំហុស', description:'បញ្ហាកែប្រែតួនាទី' }) })
+    }
+    const roleOptions = [
+      { label: 'ប្រធាន', value: 'leader' },
+      { label: 'អនុប្រធាន', value: 'deputy_leader' },
+      { label: 'សមាជិក', value: 'member' },
+    ]
+    const groupOptions = [
+      { label: 'អ្នកដឹកនាំប្រជុំ', value: 'lead_meeting' },
+      { label: 'អ្នកការពារ', value: 'defender' },
+      { label: 'អ្នកចូលរួម', value: 'audient' },
+    ]
+    function attendantValue(lm) {
+      if (!lm.attendant) return 0
+      return lm.attendant.people_id === lm.member?.id ? 1 : 2
+    }
+    function attendantLabel(lm) {
+      if (!lm.attendant) return 'អវត្តមាន'
+      if (lm.attendant.people_id === lm.member?.id) return 'មកផ្ទាល់'
+      return 'ជំនួស'
+    }
+    function attendantType(lm) {
+      if (!lm.attendant) return 'error'
+      return lm.attendant.people_id === lm.member?.id ? 'success' : 'warning'
+    }
+    function attendantOptions(lm) {
+      return [
+        { label: 'អវត្តមាន', value: 0 },
+        { label: 'មកផ្ទាល់', value: 1 },
+        { label: 'មានអ្នកជំនួស', value: 2 },
+      ]
+    }
+    function updateAttendant(lm, val) {
+      const mmId = lm.meeting_member_id || lm.id
+      store.dispatch('meeting/toggleMeetingMemberAttendant', { member_id: lm.member.id, meeting_member_id: mmId })
+        .then(res => {
+          if (res.data?.ok) {
+            // Update local listMembers from response — no full page reload
+            if (record.value && res.data.record?.list_members) {
+              record.value.listMembers = res.data.record.list_members
+            }
+            message.success(val === 0 ? 'បានកំណត់អវត្តមាន' : 'បានកំណត់វត្តមាន')
+          }
+        }).catch(() => { notify.error({ title:'កំហុស', description:'បញ្ហាកំណត់វត្តមាន' }) })
+    }
+
+    function togglePublish(record) {
+      store.dispatch('meeting/toggleActive', { id: record.id })
+        .then(res => {
+          if (res.data?.ok) {
+            record.active = record.active ? 0 : 1
+            message.success(record.active ? 'បានផ្សាយទៅកាន់ TV ហើយ' : 'បានឈប់ផ្សាយ')
+          }
+        }).catch(() => notify.error({ title:'កំហុស', description:'បញ្ហាក្នុងពេលផ្សាយ' }))
+    }
     function formatDate(d){if(!d)return'មិនបានកំណត់';try{const dt=new Date(d);if(isNaN(dt.getTime()))return d;return dateFormat(dt,'dd-mm-yyyy')}catch(e){return d}}
 
     const meetingLeaders=computed(()=>{if(!record.value||!record.value.listMembers)return[];return record.value.listMembers.filter(lm=>lm.group==='lead_meeting'&&lm.role==='leader')})
@@ -759,12 +1001,6 @@ export default {
     const memberSearchQuery = ref('')
     const availableMembers = ref([])
     const showPrintPreview = ref(false)
-    const showMemberModal = ref(false)
-    function closeMemberModal() {
-      showMemberModal.value = false
-      fetchMeeting()
-    }
-
     const filteredAvailableMembers = computed(() => {
       const q = memberSearchQuery.value.trim().toLowerCase()
       if (!q) return availableMembers.value
@@ -862,14 +1098,15 @@ export default {
         // Reset seat for all members first (handles unassign correctly)
         m.seat = null
         m.room_seat_id = null
-        // Find assignment where member.people_id matches this listMember's member.id
+        // Find assignment by meeting_member_id (API returns it as m.id on raw data)
+        const mmId = m.meeting_member_id || m.id
         const assignment = seatAssignments.value.find(a => {
-          const pId = a.member ? (a.member.people_id || a.member.id) : null
-          return pId === m.member?.id
+          return a.meeting_member_id === mmId
         })
         if (assignment) {
           m.seat = roomSeatMap[assignment.room_seat_id] || assignment.room_seat_id
           m.room_seat_id = assignment.room_seat_id
+          // m = assignment
         }
       })
     }
@@ -943,6 +1180,7 @@ export default {
             lastname: s.lastname ,
             position: s.position || '',
             organization: s.organization || '',
+            organization_logo: s.organization_logo || null,
             role: s.role || '',
             group: s.group || '',
             seat_type: s.seat_type,
@@ -1092,8 +1330,27 @@ export default {
 
     // ─── Legal Draft (single draft per meeting) ──────────────────────────
     const legalDraft=ref(null)
-    const meetingNotStarted=computed(()=>record.value&&record.value.status===1)
-    function hydrateDraft(){legalDraft.value=getMockDraft()}
+    const legalDraftPdfUrl=ref('')
+    const meetingNotStarted=computed(()=>record.value&&Number(record.value.status)===1)
+    // Allow draft comments unless meeting is finished (status 32)
+    const canCommentOnDraft=computed(()=>{
+      if(!record.value) return true
+      const s=Number(record.value.status)
+      return s!==32
+    })
+    function hydrateDraft(){
+      legalDraft.value=getMockDraft()
+      legalDraftPdfUrl.value=(legalDraft.value&&legalDraft.value.pdf_url&&legalDraft.value.pdf_url!=='#')
+        ? legalDraft.value.pdf_url
+        : ''
+      // Prefer uploaded legal draft PDF from seichdey_preeng when available
+      const firstPreeng=docSections.seichdeyPreeng?.files?.[0]
+      if(firstPreeng?.serial&&route.params.id){
+        store.dispatch('meeting/readDocPdf',{key:'seichdeyPreeng',id:route.params.id,serial:firstPreeng.serial})
+          .then(res=>{if(res.data?.ok&&res.data.pdf) legalDraftPdfUrl.value=res.data.pdf})
+          .catch(()=>{})
+      }
+    }
 
     // ─── Checklist ────────────────────────────────────────────────────────
     const preChecklist=ref([]);const postChecklist=ref([])
@@ -1148,6 +1405,39 @@ export default {
       {id:16,item_name:'ម៉ាស៊ីនត្រជាក់',equipment_status:'working',is_checked:false,checked_at:null}
     ]}
 
+    // ─── Refresh participant tab only (no loading spinner, no full reload) ─
+    function refreshParticipantTab() {
+      const mid = route.params.id
+      if (!mid) return
+      store.dispatch('meeting/read', { id: mid }).then(res => {
+        if (res.data && res.data.record) {
+          const r = res.data.record
+          if (r.members && Array.isArray(r.members)) {
+            r.listMembers = r.members.map(m => ({
+              id: m.id,
+              meeting_member_id: m.meeting_member_id || null,
+              member: {
+                id: m.id,
+                lastname: m.lastname || '',
+                firstname: m.firstname || '',
+                email: m.email || '',
+                mobile_phone: m.mobile_phone || '',
+                position: m.position && m.position.name ? m.position.name : (typeof m.position === 'string' ? m.position : ''),
+                organization: m.organization && m.organization.name ? m.organization.name : (typeof m.organization === 'string' ? m.organization : ''),
+                gender: m.gender || '',
+              },
+              role: m.role || 'member',
+              group: m.group || 'audient',
+              seat: null,
+              attendant: m.attendant || null,
+            }))
+          }
+          record.value = r
+          fetchRoomSeats()
+        }
+      })
+    }
+
     // ─── Fetch ──────────────────────────────────────────────────────────
     function fetchMeeting(){
       const mid=route.params.id
@@ -1160,15 +1450,21 @@ export default {
           if(r.members&&Array.isArray(r.members)){
             r.listMembers=r.members.map(m=>({
               id:m.id,
+              meeting_member_id: m.meeting_member_id || null,
               member:{
                 id:m.id,
                 lastname:m.lastname||'',
-                firstname:m.firstname||'',
+                firstname: m.firstname || '',
+                email: m.email || '',
+                mobile_phone: m.mobile_phone || '',
+                position: m.position && m.position.name ? m.position.name : (typeof m.position === 'string' ? m.position : ''),
+                organization: m.organization && m.organization.name ? m.organization.name : (typeof m.organization === 'string' ? m.organization : ''),
+                gender:m.gender||'',
               },
               role:m.role||'member',
               group:m.group||'audient',
               seat:null,
-              attendant:null,
+              attendant:m.attendant||null,
             }))
           }
           record.value=r
@@ -1179,12 +1475,13 @@ export default {
     onMounted(()=>{fetchMeeting()})
     watch(()=>route.params.id,()=>{fetchMeeting()})
 
-    return{record,loading,error,formatDate,meetingLeaders,roleLabel,roleClass,groupLabel,groupClass,
+    return{record,loading,error,togglePublish,formatDate,meetingLeaders,roleLabel,roleClass,groupLabel,groupClass,
+      showEditModal, closeEditModal,
       agendas,showAgendaForm,editingAgendaIndex,agendaForm,totalDuration,formatDuration,availableHandlers,openAddAgenda,openEditAgenda,saveAgenda,removeAgenda,
       roomSeats,seatLoading,headTableSeats,leftSideSeats,rightSideSeats,audienceSeats,audienceCols,seatColorClass,seatBadgeClass,roleBorderClass,roleRingClass,roleTextClass,roleBadgeClass,
-      showSeatPicker,memberSearchQuery,filteredAvailableMembers,handleSeatClick,assignMemberToSeat,roleLabel,showMemberModal,closeMemberModal,
+      showSeatPicker,memberSearchQuery,filteredAvailableMembers,handleSeatClick,assignMemberToSeat,roleLabel,memberPanelWidth,startResizePanel,inlineMemberSearch,inlineSearchResults,newPerson,showAddPersonForm,countesyOptions,positionOptions,organizationOptions,saveNewPerson,loadFormOptions,toggleAddForm,onSearchInput,refreshParticipantTab,addMemberToMeeting,removeMemberFromMeeting,updateMemberGroupAndRole,roleOptions,groupOptions,attendantValue,attendantLabel,attendantType,attendantOptions,updateAttendant,
       showPrintPreview,nameCardItems,groupedNameCards,handlePrint,
-      legalDraft,meetingNotStarted,
+      legalDraft,legalDraftPdfUrl,meetingNotStarted,canCommentOnDraft,
       preChecklist,postChecklist,preCheckDoneCount,postCheckDoneCount,preCheckAllDone,postCheckAllDone,toggleCheck,toggleEquipStatus,
       docSections,selectDoc,uploadDoc,removeDoc,activeKey,activeIdx,activePdfSrc}
   }
@@ -1226,25 +1523,8 @@ export default {
 .name-card-print-area {
   font-family: "Khmer OS Siemreap", Siemreap, "Kantumruy Pro", "Segoe UI", sans-serif;
 }
-.print-header {
-  text-align: center;
-  margin-bottom: 6mm;
-  padding-bottom: 3mm;
-  border-bottom: 2px solid #1a1a2e;
-}
-.print-header-title {
-  font-family: Moul, "Khmer OS Muol Light", serif;
-  font-size: 14pt;
-  font-weight: bold;
-  color: #1a1a2e;
-  margin-bottom: 2mm;
-}
-.print-header-meta {
-  font-size: 9pt;
-  color: #666;
-}
 .print-group-header {
-  font-family: Moul, serif;
+  font-family: "Khmer OS Siemreap", serif;
   font-size: 11pt;
   font-weight: bold;
   color: #1a1a2e;
@@ -1260,75 +1540,77 @@ export default {
   margin-bottom: 4mm;
 }
 .name-card {
-  position: relative; 
-  border: 1px solid #333;
+  position: relative;
   border-radius: 2mm;
-  padding: 3mm 2mm;
+  padding: 4mm 3mm;
   display: flex;
   align-items: center;
-  gap: 2mm;
+  gap: 3mm;
   page-break-inside: avoid;
   background: white;
-  width: 90mm;
-  height: 50mm;
+  border: 1px solid #ddd;
+  height: 55mm;
+  width: auto;
+  min-width: 0;
+  overflow: hidden;
 }
 .name-card-seat {
   position: absolute;
-  left: 2mm;
-  top: 2mm; 
-  width: 5mm;
-  height: 5mm;
-  border-radius: 50%;
-  background: #FFFFFF;
+  right: 2mm;
+  top: 2mm;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #f0f0f0;
   color: #333;
-  border: 1px solid #666;
+  border: 1px solid #ccc;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 7pt;
   font-weight: bold;
-  flex-shrink: 0;
 }
-.name-card-body {
+.name-card-logo-col {
   flex: 1;
-  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.name-card-courtesy {
-  position: absolute;
-  right: 7mm;
-  left: 7mm;
-  top: 5mm;
-  height: 15mm;
-  text-align: center ;
-  display: block;
-  font-size: 12pt;
-  color: #1a1a2e;
-  line-height: 1.2;
+.name-card-logo {
+  width: 28mm;
+  height: 28mm;
+}
+.name-card-info-col {
+  flex: 2;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding: 2mm 0;
+}
+.name-card-info-col.full-width {
+  flex: 1;
 }
 .name-card-name {
-  text-align: center ;
-  display: block;
-  font-size: 24pt;
-  color: #1a1a2e;
-  line-height: 1.2;
-  margin-bottom: 0.5mm;
-  width: 100%;
+  font-size: 16pt;
+  font-weight: bold;
+  color: #000;
+  line-height: 1.3;
+  word-wrap: break-word;
+  text-align: center;
 }
-
-.name-card-title {
-  position: absolute;
-  right: 2mm;
-  bottom: 5mm;
+.name-card-bottom {
+  text-align: center;
+}
+.name-card-position {
   font-size: 10pt;
-  color: #333;
-  line-height: 1.2;
+  color: #000;
+  line-height: 1.3;
 }
 .name-card-org {
-  position: absolute;
-  left: 2mm;
-  bottom: 5mm;
   font-size: 10pt;
-  color: #333;
-  line-height: 1.2;
+  color: #000;
+  line-height: 1.3;
 }
 </style>
