@@ -164,38 +164,9 @@ export default {
   name: 'MeetingCreateForm',
   props: {
     model: {
-<<<<<<< HEAD
-      type: Object ,
-      required: true ,
-      default: () => {
-        return reactive({
-          name: 'Undefined' ,
-          title: 'No title'
-        })
-      },
-      // validator: (val) => {}
-    } , 
-    record: {
-      type: Object ,
-      required: false ,
-      default: () => {
-        return reactive({
-          id: 0 ,
-          objective: '' ,
-          contact_info: '' ,
-          route: '' ,
-          date: new Date() ,
-          start: null ,
-          summary: '' ,
-          end : null ,
-          type_id: null
-        })
-      }
-=======
       type: Object,
       required: true,
       default: () => ({ name: 'meeting', title: 'កិច្ចប្រជុំ' })
->>>>>>> sinpanharong_v1
     },
     show: { type: Boolean, default: false },
     onClose: { type: Function, default: null }
@@ -222,24 +193,12 @@ export default {
       }))
     )
 
-<<<<<<< HEAD
-    const rooms = computed( () => {
-      const list = store.getters['meetingRoom/records'].all
-      return Array.isArray(list) ? list.map( ( r ) => {
-        return { label: r.name , value: r.id }
-      }) : []
-    })
-    const selectedRoom = ref(null)
-
-    const today = ref( new Date() )
-=======
     const roomOptions = computed(() =>
       (store.getters['meetingRoom/records']?.all || []).map(o => ({
         label: o.name,
         value: o.id
       }))
     )
->>>>>>> sinpanharong_v1
 
     const rules = {
       objective: {
@@ -258,42 +217,9 @@ export default {
         trigger: ['blur', 'change']
       },
       end: {
-<<<<<<< HEAD
-        hour: parseInt( dateFormat( today.value , 'H') ) ,
-        minutes: parseInt( dateFormat( today.value , 'MM') )
-      }
-    })
-
-    function clearForm(){
-      props.record.id = 0
-      props.record.objective = '' 
-      props.record.contact_info = '' 
-      props.record.route = '' 
-      props.record.type = null
-
-      meetingDateTime.year = parseInt( dateFormat( today.value , 'yyyy') )
-      meetingDateTime.month = parseInt( dateFormat( today.value , 'mm') )
-      meetingDateTime.day = parseInt( dateFormat( today.value , 'dd') )
-      meetingDateTime.start = {
-          hour : parseInt( dateFormat( today.value , 'H') ) ,
-          minutes : parseInt( dateFormat( today.value , 'MM') )
-      }
-      meetingDateTime.end = {
-        hour: parseInt( dateFormat( today.value , 'H') ) ,
-        minutes: parseInt( dateFormat( today.value , 'MM') )
-      }
-
-      props.record.date = [meetingDateTime.year,meetingDateTime.month,meetingDateTime.day].join('-')
-      props.record.start = [meetingDateTime.start.hour,meetingDateTime.start.minutes].join(':')
-      props.record.end = [meetingDateTime.end.hour,meetingDateTime.end.minutes].join(':')
-
-      if( props.show == true ){
-        props.onClose()
-=======
         required: true,
         message: 'សូមជ្រើសរើសម៉ោងបញ្ចប់',
         trigger: ['blur', 'change']
->>>>>>> sinpanharong_v1
       }
     }
 
@@ -344,32 +270,6 @@ export default {
         return
       }
 
-<<<<<<< HEAD
-      btnSavingLoadingRef.value = true
-      crud.value.create( 
-        {
-          objective: props.record.objective ,
-          date: props.record.date  ,
-          start: props.record.start ,
-          end: props.record.end ,
-          type_id: props.record.type_id ,
-          contact_info : props.record.contact_info ,
-          route : props.record.route ,
-          summary : props.record.summary ,
-          organizations: props.record.organizations
-        },
-        ( res ) => {
-          switch( res.status ){
-            case 200 : 
-            // ── Toggle the selected room on the newly created meeting ──
-            const newMeetingId = res.data.record?.id
-            if ( selectedRoom.value && newMeetingId ) {
-              store.dispatch( props.model.name+'/toggleMeetingRoom', {
-                room: { id: selectedRoom.value },
-                meeting: { id: newMeetingId }
-              })
-            }
-=======
       const payload = {
         objective: form.objective.trim(),
         date: form.date,
@@ -389,7 +289,6 @@ export default {
         (res) => {
           saving.value = false
           if (res.status === 200) {
->>>>>>> sinpanharong_v1
             notify.success({
               title: 'រក្សាទុកព័ត៌មាន',
               description: res.data?.message || 'បានបង្កើតកិច្ចប្រជុំដោយជោគជ័យ។',
@@ -412,26 +311,6 @@ export default {
     }
 
     return {
-<<<<<<< HEAD
-      /**
-       * Variables
-       */
-      rules ,
-      /**
-       * Functions
-       */
-      create ,
-      initial ,
-      maskOrEscClick ,
-      btnSavingLoadingRef ,
-      meetingDateTime ,
-      selectedType ,
-      types ,
-      organizations ,
-      selectedOrganization ,
-      rooms ,
-      selectedRoom
-=======
       formRef,
       form,
       rules,
@@ -441,7 +320,6 @@ export default {
       roomOptions,
       initial,
       create
->>>>>>> sinpanharong_v1
     }
   }
 }
