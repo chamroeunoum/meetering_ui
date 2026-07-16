@@ -164,7 +164,6 @@ export default {
   name: 'MeetingCreateForm',
   props: {
     model: {
-<<<<<<< HEAD
       type: Object ,
       required: true ,
       default: () => {
@@ -191,11 +190,6 @@ export default {
           type_id: null
         })
       }
-=======
-      type: Object,
-      required: true,
-      default: () => ({ name: 'meeting', title: 'កិច្ចប្រជុំ' })
->>>>>>> sinpanharong_v1
     },
     show: { type: Boolean, default: false },
     onClose: { type: Function, default: null }
@@ -222,7 +216,6 @@ export default {
       }))
     )
 
-<<<<<<< HEAD
     const rooms = computed( () => {
       const list = store.getters['meetingRoom/records'].all
       return Array.isArray(list) ? list.map( ( r ) => {
@@ -232,14 +225,6 @@ export default {
     const selectedRoom = ref(null)
 
     const today = ref( new Date() )
-=======
-    const roomOptions = computed(() =>
-      (store.getters['meetingRoom/records']?.all || []).map(o => ({
-        label: o.name,
-        value: o.id
-      }))
-    )
->>>>>>> sinpanharong_v1
 
     const rules = {
       objective: {
@@ -258,7 +243,6 @@ export default {
         trigger: ['blur', 'change']
       },
       end: {
-<<<<<<< HEAD
         hour: parseInt( dateFormat( today.value , 'H') ) ,
         minutes: parseInt( dateFormat( today.value , 'MM') )
       }
@@ -289,11 +273,6 @@ export default {
 
       if( props.show == true ){
         props.onClose()
-=======
-        required: true,
-        message: 'សូមជ្រើសរើសម៉ោងបញ្ចប់',
-        trigger: ['blur', 'change']
->>>>>>> sinpanharong_v1
       }
     }
 
@@ -344,7 +323,6 @@ export default {
         return
       }
 
-<<<<<<< HEAD
       btnSavingLoadingRef.value = true
       crud.value.create( 
         {
@@ -369,27 +347,6 @@ export default {
                 meeting: { id: newMeetingId }
               })
             }
-=======
-      const payload = {
-        objective: form.objective.trim(),
-        date: form.date,
-        start: form.start,
-        end: form.end,
-        type_id: form.type_id || 0,
-        contact_info: form.contact_info || '',
-        route: form.route || '',
-        summary: form.summary || '',
-        organizations: Array.isArray(form.organizations) ? form.organizations : [],
-        rooms: Array.isArray(form.rooms) ? form.rooms : []
-      }
-
-      saving.value = true
-      crud.value.create(
-        payload,
-        (res) => {
-          saving.value = false
-          if (res.status === 200) {
->>>>>>> sinpanharong_v1
             notify.success({
               title: 'រក្សាទុកព័ត៌មាន',
               description: res.data?.message || 'បានបង្កើតកិច្ចប្រជុំដោយជោគជ័យ។',
@@ -412,7 +369,6 @@ export default {
     }
 
     return {
-<<<<<<< HEAD
       /**
        * Variables
        */
@@ -431,17 +387,6 @@ export default {
       selectedOrganization ,
       rooms ,
       selectedRoom
-=======
-      formRef,
-      form,
-      rules,
-      saving,
-      typeOptions,
-      organizationOptions,
-      roomOptions,
-      initial,
-      create
->>>>>>> sinpanharong_v1
     }
   }
 }
