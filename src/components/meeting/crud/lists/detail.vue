@@ -652,37 +652,28 @@
             <n-tab-pane name="draft" tab="សេចក្តីព្រាង">
               <div class="p-4 md:p-6">
                 <div v-if="!legalDraft" class="text-center text-gray-400 py-12 bg-gray-50 rounded-lg border border-dashed border-default"><svg class="w-16 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M6.75 3.5A3.25 3.25 0 0 0 3.5 6.75v10.5a3.25 3.25 0 0 0 3.25 3.25h10.5a3.25 3.25 0 0 0 3.25-3.25V9.372a2.25 2.25 0 0 0-.659-1.59L15.218 3.16A2.25 2.25 0 0 0 13.628 2.5H11.5v2.25c0 1.519-1.231 2.75-2.75 2.75H6.75V3.5z" fill="currentColor"></path></g></svg><div>មិនទាន់មានសេចក្តីព្រាង</div></div>
-                <div v-else class="rounded-lg border border-gray-200 overflow-hidden">
-                  <div class="flex items-center justify-between p-4 border-b border-default">
-                    <div class="flex items-center space-x-3">
-                      <div class="w-10 h-10 border border-default rounded-lg flex items-center justify-center">
-                        <svg class="w-8 h-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M8.75 11.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5zm0 2.75a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5zm0 2.75a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5z" fill="currentColor"></path></g></svg>
-                      </div>
-                      <div>
-                        <div class="font-bold ">{{ legalDraft.title }}</div>
-                        <div class="text-xs ">v{{ legalDraft.version_number || 1 }} · {{ legalDraft.regulator || '' }}</div>
-                      </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                      <router-link :to="{name:'DraftViewer',params:{meeting_id:record.id,draft_id:record.id},query:{meeting_status:record.status,meeting_date:record.date}}" 
+                <div v-else>
+                  <!-- Combined draft viewer + PDF comment section -->
+                  <draft-pdf-section
+                    mode="embedded"
+                    :pdf-url="legalDraftPdfUrl"
+                    :docx-url="legalDraft.docx_url || ''"
+                    :editable="canCommentOnDraft"
+                    :title="legalDraft.title"
+                    :version="legalDraft.version_number || 1"
+                    :status="legalDraft.status"
+                    :regulator="legalDraft.regulator || ''"
+                    :meeting-id="record.id"
+                    :start-with-sidebar="true"
+                  />
+                  <div class="mt-3 flex justify-end">
+                    <router-link
+                      :to="{ name: 'DraftTimeline', params: { meeting_id: record.id } }"
                       class="inline-flex items-center text-sm px-3 py-1.5 rounded border border-default transition-colors"
-                      >
-                        <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zm-3.25 7a.75.75 0 0 1 .75-.75h5a.75.75 0 0 1 0 1.5h-5a.75.75 0 0 1-.75-.75zm0 3.5a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75z" fill="currentColor"></path></g></svg>បើកមើលសេចក្តីព្រាង
-                      </router-link>
-                      <router-link :to="{name:'DraftTimeline',params:{meeting_id:record.id}}" class="inline-flex items-center text-sm  px-3 py-1.5 rounded border border-default transition-colors">
-                        <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM11.75 6a.75.75 0 0 1 .75.75V12h3.75a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75V6.75a.75.75 0 0 1 .75-.75z" fill="currentColor"></path></g></svg>ប្រវត្តិកំណែ
-                      </router-link>
-                    </div>
-                  </div>
-                  <div class="p-4">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                      <div><span class="">ស្ថានភាព៖</span> <span class="font-bold ml-1" :class="legalDraft.status==='final'?'':'text-blue-400'">{{ legalDraft.status==='final'?'ចុងក្រោយ':'កំពុងដំណើរការ' }}</span></div>
-                      <div><span class="">កំណែបច្ចុប្បន្ន៖</span> <span class="font-bold ml-1">v{{ legalDraft.version_number || 1 }}</span></div>
-                      <div><span class="">គតិយុត្តយោង៖</span> <span class="font-bold ml-1">{{ legalDraft.regulator || 'មិនមាន' }}</span></div>
-                    </div>
-                    <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700" v-if="!meetingNotStarted">
-                      <svg class="w-4 h-4 inline mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM11 7a1 1 0 1 0 2 0a1 1 0 0 0-2 0zm1 3.75v5.5a.75.75 0 0 0 1.5 0v-5.5a.75.75 0 0 0-1.5 0z" fill="currentColor"></path></g></svg>កិច្ចប្រជុំបានចាប់ផ្ដើមហើយ — មិនអាចកែប្រែមតិ ឬកំណត់ចំណាំលើសេចក្តីព្រាងបានទេ។
-                    </div>
+                    >
+                      <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM11.75 6a.75.75 0 0 1 .75.75V12h3.75a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75V6.75a.75.75 0 0 1 .75-.75z" fill="currentColor"/></g></svg>
+                      ប្រវត្តិកំណែ
+                    </router-link>
                   </div>
                 </div>
               </div>
@@ -719,7 +710,8 @@ import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 import { useMessage, useNotification } from 'naive-ui'
 import dateFormat from 'dateformat'
-import UpdateForm from '../widgets/update.vue'
+import MemberForm from '../widgets/member.vue'
+import DraftPdfSection from '../widgets/draft-pdf-section.vue'
 
 // ─── Mock Data ──────────────────────────────────────────────────────────
 function getMockRecord() {
@@ -782,7 +774,7 @@ function getMockDraft() {
 
 export default {
   name:'MeetingDetailPage',
-  components: { UpdateForm },
+  components: { MemberForm, DraftPdfSection },
   props:{model:{type:Object,required:true,default:()=>({name:'meeting',title:'កិច្ចប្រជុំ'})}},
   setup(props){
     const store=useStore();const route=useRoute();const message=useMessage();const notify=useNotification()
@@ -1338,8 +1330,27 @@ export default {
 
     // ─── Legal Draft (single draft per meeting) ──────────────────────────
     const legalDraft=ref(null)
-    const meetingNotStarted=computed(()=>record.value&&record.value.status===1)
-    function hydrateDraft(){legalDraft.value=getMockDraft()}
+    const legalDraftPdfUrl=ref('')
+    const meetingNotStarted=computed(()=>record.value&&Number(record.value.status)===1)
+    // Allow draft comments unless meeting is finished (status 32)
+    const canCommentOnDraft=computed(()=>{
+      if(!record.value) return true
+      const s=Number(record.value.status)
+      return s!==32
+    })
+    function hydrateDraft(){
+      legalDraft.value=getMockDraft()
+      legalDraftPdfUrl.value=(legalDraft.value&&legalDraft.value.pdf_url&&legalDraft.value.pdf_url!=='#')
+        ? legalDraft.value.pdf_url
+        : ''
+      // Prefer uploaded legal draft PDF from seichdey_preeng when available
+      const firstPreeng=docSections.seichdeyPreeng?.files?.[0]
+      if(firstPreeng?.serial&&route.params.id){
+        store.dispatch('meeting/readDocPdf',{key:'seichdeyPreeng',id:route.params.id,serial:firstPreeng.serial})
+          .then(res=>{if(res.data?.ok&&res.data.pdf) legalDraftPdfUrl.value=res.data.pdf})
+          .catch(()=>{})
+      }
+    }
 
     // ─── Checklist ────────────────────────────────────────────────────────
     const preChecklist=ref([]);const postChecklist=ref([])
@@ -1470,7 +1481,7 @@ export default {
       roomSeats,seatLoading,headTableSeats,leftSideSeats,rightSideSeats,audienceSeats,audienceCols,seatColorClass,seatBadgeClass,roleBorderClass,roleRingClass,roleTextClass,roleBadgeClass,
       showSeatPicker,memberSearchQuery,filteredAvailableMembers,handleSeatClick,assignMemberToSeat,roleLabel,memberPanelWidth,startResizePanel,inlineMemberSearch,inlineSearchResults,newPerson,showAddPersonForm,countesyOptions,positionOptions,organizationOptions,saveNewPerson,loadFormOptions,toggleAddForm,onSearchInput,refreshParticipantTab,addMemberToMeeting,removeMemberFromMeeting,updateMemberGroupAndRole,roleOptions,groupOptions,attendantValue,attendantLabel,attendantType,attendantOptions,updateAttendant,
       showPrintPreview,nameCardItems,groupedNameCards,handlePrint,
-      legalDraft,meetingNotStarted,
+      legalDraft,legalDraftPdfUrl,meetingNotStarted,canCommentOnDraft,
       preChecklist,postChecklist,preCheckDoneCount,postCheckDoneCount,preCheckAllDone,postCheckAllDone,toggleCheck,toggleEquipStatus,
       docSections,selectDoc,uploadDoc,removeDoc,activeKey,activeIdx,activePdfSrc}
   }

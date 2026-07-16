@@ -6,8 +6,8 @@
         <svg class="flex-none w-8 h-8 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/><path d="M3 9V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4"/><path d="M8 3v4"/><path d="M16 3v4"/><path d="M8 13h.01"/><path d="M12 13h.01"/><path d="M16 13h.01"/><path d="M8 17h.01"/><path d="M12 17h.01"/><path d="M16 17h.01"/></svg>
         <div class="font-moul ml-2 h-8 leading-9">កិច្ចប្រជុំ</div>
       </div>
-      <div class="flex-grow flex flex-row-reverse gap-2 items-center">
-        <n-button type="success" size="small" @click="showCreateModal()">
+      <div class="flex-grow flex flex-row-reverse gap-2">
+        <n-button type="success" size="small" @click="showCreateModal">
           <template #icon>+</template> បន្ថែម
         </n-button>
         <div class="w-2/5 relative h-8">
