@@ -57,7 +57,7 @@
             <n-tab-pane name="agenda" tab="របៀបវារៈ" >
               <div class="p-4 md:p-6">
                 <div class="p-4 rounded-lg border border-default mb-6">
-                  <h3 class="font-moul text-md mb-2">កម្មវត្ថុ</h3>
+                  <h3 class="font-moul text-md mb-2">កម្មវត្ថុassda</h3>
                   <p class=" leading-relaxed">{{ record.objective || 'មិនបានកំណត់' }}</p>
                 </div>
                 <div class="flex justify-between items-center mb-4">
