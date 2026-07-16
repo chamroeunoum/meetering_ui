@@ -57,9 +57,25 @@
       </n-tab-pane>
 
       <n-tab-pane name="photo" tab="រូបភាព">
-        <div class="mt-2">
-          <n-upload accept="image/*" :show-file-list="false" :custom-request="uploadRoomPhoto" class="ml-auto">
-            <n-button size="tiny" quaternary>📷 រូបថត</n-button>
+        <div class="mt-4 flex flex-col items-center gap-4">
+          <!-- Photo preview -->
+          <div class="w-full max-w-md aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+            <img v-if="room.image" :src="room.image" class="w-full h-full object-contain" />
+            <div v-else class="flex flex-col items-center gap-2 text-gray-400">
+              <svg class="w-16 h-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span class="text-sm">គ្មានរូបភាព</span>
+            </div>
+          </div>
+          <!-- Upload area -->
+          <n-upload accept="image/*" :show-file-list="false" :custom-request="uploadRoomPhoto" class="w-full max-w-md">
+            <div class="w-full py-6 rounded-lg border-2 border-dashed border-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 cursor-pointer flex flex-col items-center gap-2 transition-colors">
+              <svg class="w-10 h-10 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span class="text-blue-600 dark:text-blue-400 font-semibold text-base">ចុចដើម្បីជ្រើសរើសរូបថត</span>
+              <span class="text-xs text-blue-400">ឯកសារ PNG, JPG រឺ WEBP</span>
+            </div>
+          <div v-if="photoUploading" class="text-sm text-blue-500 flex items-center gap-2 mt-2">
+            <n-spin size="small" /> កំពុងផ្ទុកឡើង...
+          </div>
           </n-upload>
         </div>
       </n-tab-pane>
@@ -184,6 +200,22 @@ export default {
       try { await store.dispatch('meetingRoomEquipment/delete', { id: eq.id }); message.success('បានលុប។'); fetchEquipment() } catch (e) { message.error('មានបញ្ហា។') }
     }
 
+    // Photo
+    const photoUploading = ref(false)
+
+    async function uploadRoomPhoto({ file }) {
+      photoUploading.value = true
+      const fd = new FormData()
+      fd.append('files', file.file)
+      fd.append('id', roomId.value)
+      try {
+        await store.dispatch('meetingRoom/uploadPicture', fd)
+        message.success('បានផ្ទុករូបថត។')
+        fetchRoom()
+      } catch (e) { message.error('មានបញ្ហា។') }
+      finally { photoUploading.value = false }
+    }
+
     // ─── Seats ───────────────────────────────────────────────────────
     async function fetchSeats() {
       seatLoading.value = true
@@ -208,24 +240,13 @@ export default {
       try { await store.dispatch('meetingRoomSeat/clearAll', { room_id: roomId.value }); message.success('បានលុបទាំងអស់។'); fetchSeats() } catch (e) { message.error('មានបញ្ហា។') }
     }
 
-    async function uploadRoomPhoto({ file }) {
-      const fd = new FormData()
-      fd.append('files', file.file)
-      fd.append('id', roomId.value)
-      try {
-        await store.dispatch('meetingRoom/uploadPicture', fd)
-        message.success('បានផ្ទុករូបថត។')
-        fetchRoom()
-      } catch (e) { message.error('មានបញ្ហា។') }
-    }
-
     onMounted(() => { fetchRoom(); fetchEquipment(); fetchSeats() })
 
     return {
       room, activeTab, toggleRoomActive,
       equipment, equipLoading, showEquipModal, editingEquipId, equipForm, categoryOptions, openEquipModal, editEquipment, saveEquipment, toggleEquipStatus, deleteEquipment,
       seats, seatLoading, handleSeatAdd, handleSeatEdit, handleSeatDelete, handleSeatBatchAdd, handleSeatClear,
-      uploadRoomPhoto
+      uploadRoomPhoto, photoUploading
     }
   }
 }

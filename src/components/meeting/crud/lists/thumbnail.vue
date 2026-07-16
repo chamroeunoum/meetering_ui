@@ -15,6 +15,23 @@
             class="px-2 h-8 w-full rounded border border-gray-200 focus:border-blue-600"
             placeholder="ស្វែងរក" />
         </div>
+        
+        <!-- <n-button size="tiny" quaternary @click="$router.push('/meetings/schedule')" class="!p-1">
+          <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+        </n-button> -->
+        <div class="w-36 relative h-8">
+          <n-select
+            v-model:value="selectedStatuses"
+            :options="headerStatusOptions"
+            placeholder="ស្ថានភាព"
+            size="small"
+            clearable
+            @update:value="onHeaderStatusChange"
+          />
+        </div>
+        <n-button size="tiny" quaternary @click="openTvSchedule" class="!p-1">
+          <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </n-button>
       </div>
     </div>
     <!-- Table of crud -->
@@ -248,7 +265,13 @@
           v-if="Array.isArray(records) && records.length > 0"
           class="vcb-horizontal mb-24 px-2"
         >
-          <div v-for="(record, index) in records" :key="'h'+index" class="item-h bg-card rounded-lg border border-default p-4">
+          <div v-for="(record, index) in records" :key="'h'+index" class="item-h bg-card rounded-lg border border-default p-4 relative">
+            <!-- Status badge top-right -->
+            <div v-if="record.status"
+              class="absolute top-2 right-2 px-2 py-0.5 rounded-full text-xxs font-bold border z-10"
+              :class="getStatusBadgeClass(record.status)">
+              {{ getStatusLabel(record.status) }}
+            </div>
             <router-link :to="'/meetings/' + record.id" class="block">
               <div class="content-h">
                 <!-- Line 1: Objective (full width, bold, big, gray) -->
@@ -256,7 +279,7 @@
                   <pre class="font-bold text-base text-wrap leading-6" v-html="applyTagMark(record.objective)"></pre>
                 </div>
                 <!-- Line 2: All info inline -->
-                <div class="w-full flex flex-wrap items-center gap-x-4 gap-y-1 text-xxs text-gray-500">
+                <div class="w-full flex flex-wrap items-center gap-x-4 gap-y-1 text-xxs ">
                   <span class="flex items-center">
                     <svg class="w-3.5 h-3.5 mr-1 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M17.75 3A3.25 3.25 0 0 1 21 6.25v11.5A3.25 3.25 0 0 1 17.75 21H6.25A3.25 3.25 0 0 1 3 17.75V6.25A3.25 3.25 0 0 1 6.25 3h11.5zm0 1.5H6.25A1.75 1.75 0 0 0 4.5 6.25v11.5c0 .966.784 1.75 1.75 1.75h11.5a1.75 1.75 0 0 0 1.75-1.75V6.25a1.75 1.75 0 0 0-1.75-1.75zM7.75 7a.75.75 0 0 1 .75.75V9.5h7V7.75a.75.75 0 0 1 1.5 0V9.5h.75c.966 0 1.75.784 1.75 1.75v1.5a.75.75 0 0 1-1.5 0v-1.5a.25.25 0 0 0-.25-.25h-.75v.75a.75.75 0 0 1-1.5 0v-.75h-7v.75a.75.75 0 0 1-1.5 0v-.75H7.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h4a.75.75 0 0 1 0 1.5h-4A1.75 1.75 0 0 1 5.5 18.75v-7.5c0-.966.784-1.75 1.75-1.75H8V7.75A.75.75 0 0 1 8.75 7h-1z" fill="currentColor"></path></g></svg>
                     {{ $toKhmer(dateFormat(new Date(record.date), 'dd-mm-yyyy')) }}
@@ -265,25 +288,34 @@
                     <svg class="w-3.5 h-3.5 mr-1 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM11.75 6a.75.75 0 0 1 .75.75V12h3.75a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75V6.75a.75.75 0 0 1 .75-.75z" fill="currentColor"></path></g></svg>
                     {{ $toKhmer(record.start + ' - ' + record.end) }}
                   </span>
-                  <span v-if="record.type" class="text-gray-600">{{ record.type.name }}</span>
+                  <span v-if="record.type" class="">{{ record.type.name }}</span>
                   <span v-if="Array.isArray(record.rooms) && record.rooms.length > 0" class="flex items-center">
                     <svg class="w-3.5 h-3.5 mr-1 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 13c0-.55-.45-1-1-1h-4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1l1.27.67c.33.18.73-.06.73-.44v-2.46c0-.38-.4-.62-.73-.44L18 14v-1zm-7.2-9.1l-6 4.5c-.5.38-.8.97-.8 1.6v9c0 1.1.9 2 2 2h13c.55 0 1-.45 1-1s-.45-1-1-1H6v-9l6-4.5 6 4.5v1h2v-1c0-.63-.3-1.22-.8-1.6l-6-4.5a2.01 2.01 0 0 0-2.4 0z" fill="currentColor"></path></svg>
                     {{ record.rooms.map(r => r.name).join(', ') }}
                   </span>
                   <span v-if="Array.isArray(record.organizations) && record.organizations.length > 0" class="flex items-center">
-                    <svg class="w-3.5 h-3.5 mr-1 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4zm0 1.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 0 0 0-5zM2 19v-.5C2 14.693 5.907 13 12 13s10 1.693 10 5.5v.5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm1.5 0a.5.5 0 0 0 .5.5h16a.5.5 0 0 0 .5-.5v-.5c0-2.003-3.358-4-8.5-4s-8.5 1.997-8.5 4v.5z" fill="currentColor"></path></g></svg>
+                    <svg class="w-3.5 h-3.5 mr-1 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M6.75 3.5A2.25 2.25 0 0 0 4.5 5.75v.68A8.984 8.984 0 0 0 3.5 11.5v.5c0 4.556 3.388 8.33 7.75 8.907V22H6.75a.75.75 0 0 0 0 1.5h10.5a.75.75 0 0 0 0-1.5h-5v-1.093c4.362-.578 7.75-4.351 7.75-8.907v-.5c0-1.71-.486-3.324-1.327-4.695l.077-.055V5.75A2.25 2.25 0 0 0 16.75 3.5h-10zM6 5.75a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 .75.75v.75H6v-.75zm.703 2.25h10.594A7.478 7.478 0 0 1 18.5 11.5v.5c0 3.728-2.678 6.76-6.5 7.414-3.822-.654-6.5-3.686-6.5-7.414v-.5c0-1.365.371-2.652 1.014-3.75H6.703z" fill="currentColor"></path></g></svg>
                     {{ record.organizations.map(o => o.name).join(', ') }}
                   </span>
                   <span v-if="getListMembersLeaders(record).length > 0" class="flex items-center">
-                    <svg class="w-3.5 h-3.5 mr-1 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M6.75 3.5A2.25 2.25 0 0 0 4.5 5.75v.68A8.984 8.984 0 0 0 3.5 11.5v.5c0 4.556 3.388 8.33 7.75 8.907V22H6.75a.75.75 0 0 0 0 1.5h10.5a.75.75 0 0 0 0-1.5h-5v-1.093c4.362-.578 7.75-4.351 7.75-8.907v-.5c0-1.71-.486-3.324-1.327-4.695l.077-.055V5.75A2.25 2.25 0 0 0 16.75 3.5h-10zM6 5.75a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 .75.75v.75H6v-.75zm.703 2.25h10.594A7.478 7.478 0 0 1 18.5 11.5v.5c0 3.728-2.678 6.76-6.5 7.414-3.822-.654-6.5-3.686-6.5-7.414v-.5c0-1.365.371-2.652 1.014-3.75H6.703z" fill="currentColor"></path></g></svg>
+                    <svg class="w-3.5 h-3.5 mr-1 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4zm0 1.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 0 0 0-5zM2 19v-.5C2 14.693 5.907 13 12 13s10 1.693 10 5.5v.5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm1.5 0a.5.5 0 0 0 .5.5h16a.5.5 0 0 0 .5-.5v-.5c0-2.003-3.358-4-8.5-4s-8.5 1.997-8.5 4v.5z" fill="currentColor"></path></g></svg>
                     <span v-for="(lm,i) in getListMembersLeaders(record)" :key="'hl'+i">
-                      <template v-if="lm.member && lm.member.officers && lm.member.officers.length">{{ lm.member.officers.map(o=>(o.countesy?o.countesy.name+' ':'')) }}{{ lm.member.lastname }} {{ lm.member.firstname }}</template>
-                      {{ i < getListMembersLeaders(record).length-1 ? ', ' : '' }}
+                      <template v-if="lm.member && lm.member.officers && lm.member.officers.length">{{ lm.member.officers.map(o=>(o.countesy?o.countesy.name+' ':'')).join('') }}{{ lm.member.lastname }} {{ lm.member.firstname }}</template>
+                      {{ i < getListMembersLeaders(record).length-1 ? ' , ' : '' }}
                     </span>
                   </span>
                 </div>
               </div>
             </router-link>
+              <div class="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-gray-100">
+                <span class="text-xxs flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full" :class="record.active ? bg-green-500 : bg-gray-300"></span>
+                  {{ parseInt( record.active ) > 0 ? 'បានផ្សាយ' : 'មិនទាន់ផ្សាយ' }}
+                </span>
+                <n-button size="tiny" :type="record.active ? warning : primary" @click="togglePublish(record)">
+                  {{ parseInt( record.active ) > 0 ? 'ឈប់ផ្សាយ' : 'ផ្សាយ' }}
+                </n-button>
+              </div>
           </div>
         </div>
       </Transition>
@@ -293,7 +325,7 @@
             !Array.isArray(records) ||
             (Array.isArray(records) && records.length <= 0)
           "
-          class="mt-24 text-lg text-gray-600"
+          class="mt-24 text-lg "
         >
           មិនមានព័ត៌មានសម្រាប់បង្ហាញឡើយ។
         </div>
@@ -559,7 +591,7 @@
             <template #trigger>
               <svg
                 class="w-8 h-8 cursor-pointer text-blue-500 duration-300"
-                @click="showCreateModal"
+                @click="showCreateModal()"
                 xmlns="http://www.w3.org/2000/svg"
                 xmlns:xlink="http://www.w3.org/1999/xlink"
                 viewBox="0 0 24 24"
@@ -723,6 +755,10 @@ export default {
     const message = useMessage();
     const notify = useNotification();
     const crud = ref(null);
+
+    function openTvSchedule() {
+      window.open('/#/tvtemplatex', '_blank')
+    }
 
     const server = ref(store.getters[props.model.name + "/server"]);
     const pagination = ref(store.getters[props.model.name + "/pagination"]);
@@ -914,6 +950,20 @@ export default {
         color: " text-gray-600",
       },
     ]);
+    const headerStatusOptions = computed(() => {
+      return statuses.filter(s => s.value !== null).map(s => ({
+        label: s.label,
+        value: s.value,
+      }));
+    });
+    function onHeaderStatusChange(value) {
+      if (value != null && value !== undefined) {
+        selectedStatuses.value = [value];
+      } else {
+        selectedStatuses.value = [];
+      }
+      goTo(1);
+    }
     function updateStatus(value, selection) {
       selectedStatuses.value = value.filter((val) => parseInt(val) > 0);
       goTo(1);
@@ -923,9 +973,29 @@ export default {
       return dateFormat(new Date(attendantDate.value), "yyyy-mm-dd");
     });
 
+    function togglePublish(record) {
+      store.dispatch('meeting/toggleActive', { id: record.id })
+        .then(res => {
+          if (res.data?.ok) {
+            record.active = record.active ? 0 : 1
+            message.success(record.active ? 'បានផ្សាយទៅកាន់ TV ហើយ' : 'បានឈប់ផ្សាយ')
+          }
+        }).catch(() => notify.error({ title:'កំហុស', description:'បញ្ហាក្នុងពេលផ្សាយ' }))
+    }
     function getStatusLabel(code) {
-      let status = statuses.find((s) => s.code == code);
+      let status = statuses.find((s) => s.value == code);
       return status != undefined ? status.label : "មិនមាន";
+    }
+    function getStatusBadgeClass(code) {
+      const map = {
+        1: 'bg-blue-100 text-blue-700 border-blue-300',
+        2: 'bg-green-100 text-green-700 border-green-300',
+        4: 'bg-yellow-100 text-yellow-700 border-yellow-300',
+        8: 'bg-pink-100 text-pink-700 border-pink-300',
+        16: 'bg-orange-100 text-orange-700 border-orange-300',
+        32: 'bg-gray-100 text-gray-600 border-gray-300',
+      };
+      return map[code] || 'bg-gray-100 text-gray-600 border-gray-300';
     }
 
     function getTypes() {
@@ -1098,6 +1168,9 @@ export default {
         store.getters[props.model.name + "/columns"].all,
       );
 
+      // Default filter: show only New (status=1) meetings
+      selectedStatuses.value = [1];
+
       getRecords();
       getTypes();
       getOrganizations();
@@ -1130,6 +1203,7 @@ export default {
       createModal,
       showCreateModal,
       closeCreateModal,
+      openTvSchedule,togglePublish,
       /**
        * Records Functions
        */
@@ -1146,8 +1220,11 @@ export default {
       updateStatus,
       statuses,
       selectedStatuses,
+      headerStatusOptions,
+      onHeaderStatusChange,
       today,
       getStatusLabel,
+      getStatusBadgeClass,
       updateType,
       types,
       updateOrganization,

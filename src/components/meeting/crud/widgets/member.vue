@@ -1,41 +1,43 @@
 <template>
     <div class="vcb-pop-create font-ktr">
       <n-modal v-bind:show="show" :on-esc="maskOrEscClick" :on-mask-click="maskOrEscClick"  :on-after-enter="initial" transform-origin="center">
-        <div class="flex flex-wrap w-11/12 font-pvh text-xl p-0 bg-gray-50 min-h-screen" >
+        <div class="flex flex-wrap w-11/12 font-pvh text-xl p-0 min-h-screen bg-card" >
           <!-- Member Form -->
           <div class="flex-none w-96 min-h-full relative" >
             <!-- List members -->
             <div class="absolute left-0 top-12 right-0 bottom-0 overflow-y-auto p-4 " >
               <div v-for="(person,index) in people" :key="index" class="flex flex-wrap border-b border-gray-200 cursor-pointer hover:bg-gray-100 duration-300" @click="toggleMeetingMembers(person)" >
-                <div class="member_name  text-gray-700 w-full h-6" >{{  (index + 1 ) + ". " + person.lastname + " " + person.firstname }}</div>
-                <div v-if="person.organizations!=undefined&&person.organizations.length" class="member_organizations text-gray-500 text-vcb-xs mr-2" >{{ person.organizations.map( (p) => p.name ).join(' - ') }}</div>
-                <div v-if="person.positions!=undefined&&person.positions.length" class="member_positions text-gray-500 text-vcb-xs mr-2 " > {{ person.positions.map( (p) => p.name ).join(' - ') }}</div>
-                <div v-if="person.email != undefined && person.email.length > 0" class="member_email  text-gray-500 text-vcb-xs mr-2" >{{ person.email }}</div>
-                <div v-if="person.mobile_phone != undefined && person.mobile_phone.length > 0" class="member_email  text-gray-500 text-vcb-xs " >{{ person.mobile_phone }}</div>
+                <div class="member_name   w-full h-6" >{{  (index + 1 ) + ". " + person.lastname + " " + person.firstname }}</div>
+                <div v-if="person.email != undefined && person.email.length > 0" class="member_email   text-vcb-xs mr-2" >{{ person.email }}</div>
+                <div v-if="person.mobile_phone != undefined && person.mobile_phone.length > 0" class="member_email   text-vcb-xs " >, {{ person.mobile_phone }}</div>
+                <div v-if="person.organization" class="member_organizations  text-vcb-xs mr-2" >{{ person.organization.name }}</div>
+                <div v-if="person.position" class="member_positions  text-vcb-xs mr-2 " > {{ person.position.name }}</div>
               </div>
             </div>
             <!-- Search box -->
-            <div class="absolute left-0 top-0 right-0 h-12 p-2 bg-white border-b border-gray-200 " >
+            <div class="absolute left-0 top-0 right-0 h-12 p-2 border-b border-default " >
               <n-input type="text" v-model:value="peopleSearch" @keyup.enter="getPeople" class="w-full h-8" placeholder="ស្វែងរក..." />
             </div>
           </div>
           <!-- Selected Members -->
           <div class=" flex-grow border-gray-200 relative border-l " >
-            <div class="absolute left-0 top-12 right-0 bttom-0 p-2 flex flex-wrap justify-center " >
+            <div class="absolute left-0 top-12 right-0 bottom-0 p-2 flex flex-wrap justify-start content-start overflow-y-auto overflow-x-hidden" >
               <div v-for="(meetingMember,index) in meetingMembers" :key="index" 
-                class=" border relative w-64 m-4 p-2 rounded bg-white" >
-                <div class="member_name absolute right-0 bg-white bottom-0 p-1 border border-b-0 border-r-0 text-xs rounded-tl" >
+                class="bg-card border border-default relative w-72 m-4 p-2 rounded " >
+                <div class="member_name absolute right-0 bottom-0 p-1 border border-default font-bold border-b-0 border-r-0 text-xs rounded-tl" >
                   {{  $toKhmer(index + 1 ) }}
                 </div>
-                <div class="member_photo p-1 border border-gray-100 h-10 w-10 absolute left-2 -top-5 bg-white rounded-full" >
-                  <img :src=" orgLogoUrl " />
+                <div class="member_photo p-1 border border-default h-10 w-10 absolute left-2 -top-5 rounded-full" >
+                  <img :src=" meetingMember.member.photo_url ? meetingMember.member.photo_url : orgLogoUrl " />
                 </div>
-                <div class="member_name my-6 text-center" >
+                <div class="member_name my-6 text-center text-md font-moul " >
                   {{ meetingMember.member.lastname + " " + meetingMember.member.firstname }}
                 </div>
                 <div class="member_name text-center mb-2 " >
-                  {{ ( meetingMember.member.mobile_phone != undefined && meetingMember.member.mobile_phone.length > 0 ? meetingMember.member.mobile_phone : '' ) }}
+                  {{ ( meetingMember.member.mobile_phone != undefined && meetingMember.member.mobile_phone.length > 0 ? meetingMember.member.mobile_phone + "," : '' ) }}
                   {{ ( meetingMember.member.email != undefined && meetingMember.member.email.length > 0 ? meetingMember.member.email : '' ) }}
+                  <br/>{{ meetingMember.member.organization }}
+                  <br/>{{ meetingMember.member.position }}
                 </div>
                 <!-- Button remove member from meeting list -->
                 <n-tooltip trigger="hover">
@@ -49,7 +51,7 @@
                 <!-- Button check attend -->
                 <n-tooltip trigger="hover">
                   <template #trigger>
-                    <svg :class=" ' absolute top-2 right-10 w-5 cursor-pointer text-gray-400 hover:text-green-700 duration-300 ' + ( meetingMember.attendant != undefined ? ' text-green-700 ' : '' ) "
+                    <svg :class=" ' absolute top-2 right-10 w-5 cursor-pointer  hover:text-green-700 duration-300 ' + ( meetingMember.attendant != undefined ? ' text-green-700 ' : '' ) "
                       @click="toggleMeetingMemberAttendant(meetingMember)"
                       xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32"><path d="M31 30h-2v-3a3 3 0 0 0-3-3h-4a3 3 0 0 0-3 3v3h-2v-3a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5z" fill="currentColor"></path><path d="M24 12a3 3 0 1 1-3 3a3 3 0 0 1 3-3m0-2a5 5 0 1 0 5 5a5 5 0 0 0-5-5z" fill="currentColor"></path><path d="M15 22h-2v-3a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v3H1v-3a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5z" fill="currentColor"></path><path d="M8 4a3 3 0 1 1-3 3a3 3 0 0 1 3-3m0-2a5 5 0 1 0 5 5a5 5 0 0 0-5-5z" fill="currentColor"></path></svg>
                   </template>
@@ -185,8 +187,8 @@
                             <div class="member_name" >
                               {{  (index + 1 ) + ". " + person.lastname + " " + person.firstname + ( person.mobile_phone != undefined && person.mobile_phone.length != undefined ? ' - ' + person.mobile_phone : '' )  }}
                             </div>
-                            <div v-if="person.positions.length" class="member_positions" >{{ person.positions.map( (p) => p.name ).join(' - ') }}</div>
-                            <div v-if="person.organizations.length" class="member_organizations" >{{ person.organizations.map( (p) => p.name ).join(' - ') }}</div>
+                            <!-- <div class="member_positions" >{{ person.position.name }}</div>
+                            <div class="member_organizations" >{{ person.organization.name }}</div> -->
                           </div>
                         </div>
                       </div>
@@ -323,11 +325,14 @@ export default {
       })
     }
 
-    function getPeopleForAttentant(){
-      memberAttendantDrawer.people = store.getters['meetingPeople/records'].all
+    function getPeopleForAttentant() {
+      // if (Array.isArray(store.getters['meetingPeople/records'].all) && store.getters['meetingPeople/records'].all.length > 0) {
+      //   memberAttendantDrawer.people = store.getters['meetingPeople/records'].all
+      //   return false
+      // }
       store.dispatch( props.model.name+'/people',{
         search : memberAttendantDrawer.peopleSearch ,
-        perPage : 50 ,
+        perPage : 200 ,
         page : 1
       }).then( res => {
         if( res.data.records.length > 0 ){
@@ -661,6 +666,7 @@ export default {
       getCountesies()
       getOrganizations()
       meetingMembers.value = props.record.listMembers != undefined && props.record.listMembers.length > 0 ? props.record.listMembers : []
+      console.log( meetingMembers.value )
     }
 
     return {

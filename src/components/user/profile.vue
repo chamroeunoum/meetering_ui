@@ -7,7 +7,7 @@
             </svg>
         <div class="font-moul ml-2 h-8 leading-9">ព័ត៌មានផ្ទាល់ខ្លួន</div>
       </div>
-      <div class="flex-grow flex flex-row-reverse gap-2">
+      <!-- <div class="flex-grow flex flex-row-reverse gap-2">
         <n-button type="success" size="small" @click="showCreateModal = true">
           <template #icon>+</template> បន្ថែម
         </n-button>
@@ -16,7 +16,7 @@
             class="px-2 h-8 w-full rounded border border-gray-200 focus:border-blue-600"
             placeholder="ស្វែងរក" />
         </div>
-      </div>
+      </div> -->
     </div>
     <div class="grid grid-flow-row gap-2 p-4 pb-16 md:grid-flow-col md:grid-cols-10 lg:grid-cols-12 " >
       <div class="bg-card border border-default rounded-lg shadow p-4 md:col-span-3 lg:col-span-3 xl:col-span-2" >

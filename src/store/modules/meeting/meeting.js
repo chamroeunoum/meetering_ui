@@ -133,6 +133,9 @@ const actions = {
   async toggleMeetingMember ({ state, commit, rootState },params) {
     return await crud.update(state.server+"/"+state.model.module+"/"+params.meeting.id+"/member/"+params.member.id+'/toggle')
   },
+  async toggleMeetingMemberAttendant ({ state, commit, rootState },params) {
+    return await crud.update(state.server+"/"+state.model.module+"/meeting_member/"+params.meeting_member_id+"/member/"+params.member_id+'/toggle')
+  },
   async updateMemberGroupAndRole ({ state, commit, rootState },params) {
     return await crud.create(state.server+"/"+state.model.module+"/update_group_role",params)
   },
