@@ -19,6 +19,7 @@
         <thead>
           <tr class="bg-gray-50 dark:bg-gray-800 text-left">
             <th class="p-3 w-12 text-center">#</th>
+            <th class="p-3">លេខកូដ</th>
             <th class="p-3">កម្មវត្ថុ</th>
             <th class="p-3">កាលបរិច្ឆេទ</th>
             <th class="p-3">ម៉ោង</th>
@@ -32,6 +33,7 @@
           <tr v-for="(rec, i) in records" :key="rec.id"
             class="border-t border-default hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
             <td class="p-3 text-center text-muted">{{ i + 1 + (page - 1) * perPage }}</td>
+            <td class="p-3 whitespace-nowrap"><code class="text-xs font-bold text-gray-500 font-mono">{{ rec.meeting_code || '—' }}</code></td>
             <td class="p-3 max-w-xs">
               <div class="truncate font-semibold">{{ rec.objective || '—' }}</div>
             </td>

@@ -12,6 +12,7 @@
     "make": "electron-forge make"
   },
   "dependencies": {
+    "@vueup/vue-quill": "^1.5.5",
     "axios": "^1.7.7",
     "d3": "^7.9.0",
     "dateformat": "^5.0.3",
@@ -20,6 +21,7 @@
     "naive-ui": "^2.40.1",
     "qrcode-generator": "^1.4.4",
     "qrcode.vue": "^3.6.0",
+    "quill-mention": "^6.1.1",
     "vue": "^3.5.12",
     "vue-axios": "^3.5.2",
     "vue-pdf-embed": "^2.1.1",

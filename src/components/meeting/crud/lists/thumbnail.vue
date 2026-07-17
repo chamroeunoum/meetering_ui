@@ -309,10 +309,10 @@
             </router-link>
               <div class="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-gray-100">
                 <span class="text-xxs flex items-center gap-1">
-                  <span class="w-1.5 h-1.5 rounded-full" :class="record.active ? bg-green-500 : bg-gray-300"></span>
+                  <span class="w-1.5 h-1.5 rounded-full" :class="record.active ? 'bg-green-500' : 'bg-gray-300'"></span>
                   {{ parseInt( record.active ) > 0 ? 'បានផ្សាយ' : 'មិនទាន់ផ្សាយ' }}
                 </span>
-                <n-button size="tiny" :type="record.active ? warning : primary" @click="togglePublish(record)">
+                <n-button size="tiny" :type="record.active ? 'warning' : 'primary'" @click="togglePublish(record)">
                   {{ parseInt( record.active ) > 0 ? 'ឈប់ផ្សាយ' : 'ផ្សាយ' }}
                 </n-button>
               </div>

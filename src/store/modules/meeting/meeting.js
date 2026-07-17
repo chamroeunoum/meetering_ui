@@ -22,8 +22,8 @@ const state = () => ({
   },
   server: import.meta.env.VITE_API_SERVER ,
   columns: {
-    all: ['id'] ,
-    visible : ['id'] ,
+    all: ['id', 'meeting_code'] ,
+    visible : ['id', 'meeting_code'] ,
     searchable : []
   } , 
   records: {
