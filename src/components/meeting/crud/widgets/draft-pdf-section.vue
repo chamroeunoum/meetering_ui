@@ -18,7 +18,7 @@
             <svg class="icon-lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M8.75 11.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5zm0 2.75a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5zm0 2.75a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5z" fill="currentColor"/></g></svg>
           </div>
           <div class="header-meta">
-            <h1 class="font-moul header-title text-primary">{{ title || 'សេចក្តីព្រាង' }}</h1>
+            <h1 class="font-moul header-title text-primary">{{ displayTitle }}</h1>
             <div class="header-tags">
               <n-tag v-if="statusLabel" :type="statusTagType" size="small" round strong>{{ statusLabel }}</n-tag>
               <span class="text-muted">v{{ activeVersion.version_number }}</span>
@@ -28,10 +28,7 @@
         </div>
 
         <div class="header-actions">
-          <n-button-group size="small">
-            <n-button :type="fileTab === 'pdf' ? 'primary' : 'default'" @click="fileTab = 'pdf'">PDF</n-button>
-            <n-button :type="fileTab === 'docx' ? 'primary' : 'default'" @click="fileTab = 'docx'">DOCX</n-button>
-          </n-button-group>
+          <n-tag v-if="pdfSource" size="small" type="error" round>PDF</n-tag>
           <n-button size="small" @click="downloadFile">ទាញយក</n-button>
           <n-badge :value="comments.length" :max="99" :show="comments.length > 0" :offset="[-4, 4]">
             <n-button size="small" :type="showComments ? 'primary' : 'default'" @click="toggleComments">មើលមតិ PDF</n-button>
@@ -48,6 +45,102 @@
       </n-alert>
     </div>
 
+    <!-- Bring an existing draft document from a meeting version -->
+    <n-modal
+      v-model:show="showVersionDocumentModal"
+      preset="card"
+      title="យកឯកសារពីកំណែកិច្ចប្រជុំ"
+      style="max-width: 560px"
+      :mask-closable="false"
+    >
+      <n-form label-placement="top">
+        <n-form-item label="ឈ្មោះឯកសារ" required>
+          <n-input
+            v-model:value="versionDocumentForm.name"
+            placeholder="សេចក្តីព្រាងគោលនយោបាយទូរគមនាគមន៍"
+          />
+        </n-form-item>
+        <n-form-item label="ជ្រើសរើសកំណែកិច្ចប្រជុំ" required>
+          <n-select
+            v-model:value="versionDocumentForm.version"
+            :options="meetingVersionOptions"
+            placeholder="ជ្រើសរើសកំណែ"
+          />
+        </n-form-item>
+      </n-form>
+      <template #footer>
+        <div class="modal-actions">
+          <n-button @click="showVersionDocumentModal = false">បោះបង់</n-button>
+          <n-button
+            type="primary"
+            :disabled="!versionDocumentForm.name.trim() || !versionDocumentForm.version"
+            @click="confirmVersionDocument"
+          >
+            យកឯកសារ
+          </n-button>
+        </div>
+      </template>
+    </n-modal>
+
+    <!-- Upload a new PDF + DOCX pair -->
+    <n-modal
+      v-model:show="showUploadDocumentModal"
+      preset="card"
+      title="ផ្ទុកឯកសារសេចក្តីព្រាងថ្មី"
+      style="max-width: 640px"
+      :mask-closable="false"
+    >
+      <n-form label-placement="top">
+        <n-form-item label="ឈ្មោះឯកសារ" required>
+          <n-input
+            v-model:value="uploadDocumentForm.name"
+            placeholder="សេចក្តីព្រាងគោលនយោបាយទូរគមនាគមន៍"
+          />
+        </n-form-item>
+        <div class="document-upload-grid">
+          <n-form-item label="ឯកសារ PDF" required>
+            <n-upload
+              v-model:file-list="pdfFileList"
+              :default-upload="false"
+              :max="1"
+              accept=".pdf,application/pdf"
+              @update:file-list="onPdfFileListChange"
+            >
+              <n-upload-dragger>
+                <div class="upload-label">ជ្រើសរើសឯកសារ PDF</div>
+                <div class="upload-hint">ត្រូវតែមានឯកសារ .pdf</div>
+              </n-upload-dragger>
+            </n-upload>
+          </n-form-item>
+          <n-form-item label="ឯកសារ DOCX" required>
+            <n-upload
+              v-model:file-list="docxFileList"
+              :default-upload="false"
+              :max="1"
+              accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              @update:file-list="onDocxFileListChange"
+            >
+              <n-upload-dragger>
+                <div class="upload-label">ជ្រើសរើសឯកសារ DOCX</div>
+                <div class="upload-hint">ត្រូវតែមានឯកសារ .docx</div>
+              </n-upload-dragger>
+            </n-upload>
+          </n-form-item>
+        </div>
+        <n-alert v-if="uploadValidationMessage" type="warning" :show-icon="true">
+          {{ uploadValidationMessage }}
+        </n-alert>
+      </n-form>
+      <template #footer>
+        <div class="modal-actions">
+          <n-button @click="showUploadDocumentModal = false">បោះបង់</n-button>
+          <n-button type="primary" :disabled="!canConfirmUpload" @click="confirmUploadedDocument">
+            បញ្ជាក់
+          </n-button>
+        </div>
+      </template>
+    </n-modal>
+
     <!-- Viewer shell -->
     <div
       ref="viewerShell"
@@ -59,12 +152,9 @@
     >
       <!-- Fullscreen toolbar (header is hidden behind the fixed-position shell in fullscreen) -->
       <div v-if="isFullscreen" class="fullscreen-bar bg-card border-default">
-        <span class="fullscreen-bar-title font-moul text-primary">{{ title || 'សេចក្តីព្រាង' }}</span>
+        <span class="fullscreen-bar-title font-moul text-primary">{{ displayTitle }}</span>
         <div class="fullscreen-bar-actions">
-          <n-button-group size="small">
-            <n-button :type="fileTab === 'pdf' ? 'primary' : 'default'" @click="fileTab = 'pdf'">PDF</n-button>
-            <n-button :type="fileTab === 'docx' ? 'primary' : 'default'" @click="fileTab = 'docx'">DOCX</n-button>
-          </n-button-group>
+          <n-tag v-if="pdfSource" size="small" type="error" round>PDF</n-tag>
           <n-button size="small" @click="downloadFile">ទាញយក</n-button>
           <n-button circle secondary :type="showComments ? 'primary' : 'default'" size="small" @click="toggleComments">
             <template #icon>
@@ -102,7 +192,21 @@
           </div>
 
           <div v-if="!pdfSource" class="pdf-empty-wrap">
-            <n-empty description="មិនមានឯកសារ PDF" />
+            <n-empty description="មិនទាន់មានឯកសារសេចក្តីព្រាង">
+              <template #extra>
+                <div class="empty-document-actions">
+                  <n-button type="info" secondary @click="openVersionDocumentModal">
+                    យកឯកសារពីកំណែកិច្ចប្រជុំ
+                  </n-button>
+                  <n-button type="primary" @click="openUploadDocumentModal">
+                    ផ្ទុកឯកសារថ្មី
+                  </n-button>
+                </div>
+                <div class="empty-document-hint">
+                  ឯកសារ PDF នឹងបង្ហាញនៅទីនេះ ហើយ DOCX នឹងរក្សាទុកជាមួយឯកសារ។
+                </div>
+              </template>
+            </n-empty>
           </div>
 
           <div v-else ref="pdfHost" class="pdf-host">
@@ -388,13 +492,27 @@ function getOrderedSelectionText(range, textLayer) {
   return browserText || orderedText
 }
 
-function getMockVersions() {
-  return [
+function getMockVersions(currentVersion = 4) {
+  const version = Math.max(1, parseInt(currentVersion) || 1)
+  const versions = [
     { id: 4, version_number: 4, status: 'progressing', message: 'កែសម្រួលតាមមតិយោបល់ពីក្រសួងសេដ្ឋកិច្ច — ត្រៀមដាក់អនុម័តក្នុងកិច្ចប្រជុំនេះ', actor: 'H.E. សុខ ហេង', created_at: '2026-07-05 09:20', pdf_url: '' },
     { id: 3, version_number: 3, status: 'final', message: 'កែសម្រួលផ្នែកវិសាលភាព និងបន្ថែមទិន្នន័យថវិកា', actor: 'អ្នកស្រី ចន្ថា សុគន្ធ', created_at: '2026-06-28 14:10', pdf_url: '' },
     { id: 2, version_number: 2, status: 'final', message: 'បញ្ចូលមតិពីក្រុមការងារបច្ចេកទេស', actor: 'លោក ដារ៉ា មករា', created_at: '2026-06-15 10:00', pdf_url: '' },
     { id: 1, version_number: 1, status: 'final', message: 'សេចក្តីព្រាងដំបូង — រៀបចំដោយក្រុមការងារគតិយុត្ត', actor: 'ក្រុមការងារគតិយុត្ត', created_at: '2026-06-01 09:00', pdf_url: '' }
   ]
+  if (version > 4) {
+    versions.unshift({
+      id: version,
+      version_number: version,
+      status: 'progressing',
+      message: `បន្តកិច្ចប្រជុំទៅកំណែទី ${version}`,
+      actor: 'អ្នកប្រើប្រាស់បច្ចុប្បន្ន',
+      created_at: nowStamp(),
+      pdf_url: '',
+      docx_url: ''
+    })
+  }
+  return versions.filter(item => item.version_number <= version)
 }
 
 const SendIcon = {
@@ -422,6 +540,31 @@ export default {
   },
   setup(props) {
     const message = useMessage()
+    const displayTitle = ref(props.title || 'សេចក្តីព្រាង')
+    const localPdfUrl = ref('')
+    const localDocxUrl = ref('')
+    const showVersionDocumentModal = ref(false)
+    const showUploadDocumentModal = ref(false)
+    const versionDocumentForm = reactive({
+      name: props.title || 'សេចក្តីព្រាង',
+      version: Math.max(1, parseInt(props.version) || 1)
+    })
+    const uploadDocumentForm = reactive({
+      name: props.title || 'សេចក្តីព្រាង'
+    })
+    const pdfFileList = ref([])
+    const docxFileList = ref([])
+    const selectedPdfFile = ref(null)
+    const selectedDocxFile = ref(null)
+    const temporaryDocumentStore = reactive({
+      name: '',
+      pdf_name: '',
+      pdf_url: '',
+      docx_name: '',
+      docx_url: ''
+    })
+    let uploadedPdfObjectUrl = ''
+    let uploadedDocxObjectUrl = ''
     const pdfEmbed = ref(null)
     const pdfPane = ref(null)
     const pdfHost = ref(null)
@@ -447,6 +590,32 @@ export default {
     const openThreadId = ref(null)
     const replyDraftText = ref('')
     let resizeObserver = null
+
+    const meetingVersionOptions = computed(() =>
+      versions.value.map(item => ({
+        label: `កិច្ចប្រជុំ កំណែទី ${item.version_number}`,
+        value: item.version_number
+      }))
+    )
+    const isValidPdf = computed(() => {
+      const file = selectedPdfFile.value
+      if (!file) return false
+      return file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '')
+    })
+    const isValidDocx = computed(() => {
+      const file = selectedDocxFile.value
+      if (!file) return false
+      return file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || /\.docx$/i.test(file.name || '')
+    })
+    const canConfirmUpload = computed(() =>
+      Boolean(uploadDocumentForm.name.trim() && isValidPdf.value && isValidDocx.value)
+    )
+    const uploadValidationMessage = computed(() => {
+      if (!pdfFileList.value.length && !docxFileList.value.length) return ''
+      if (!isValidPdf.value) return 'សូមជ្រើសរើសឯកសារ PDF ត្រឹមត្រូវ។'
+      if (!isValidDocx.value) return 'សូមជ្រើសរើសឯកសារ DOCX ត្រឹមត្រូវ។'
+      return ''
+    })
 
     const paneWrapperStyle = { flex: '1', display: 'flex', flexDirection: 'column', minHeight: '0' }
     const paneStyle = { flex: '1', display: 'flex', flexDirection: 'column', minHeight: '0', overflow: 'hidden' }
@@ -476,10 +645,11 @@ export default {
     })
 
     const pdfSource = computed(() => {
+      if (localPdfUrl.value) return localPdfUrl.value
       const versionUrl = (activeVersion.value?.pdf_url || '').trim()
       if (versionUrl && versionUrl !== '#') return versionUrl
       const url = (props.pdfUrl || '').trim()
-      if (!url || url === '#') return SAMPLE_PDF
+      if (!url || url === '#') return ''
       return url
     })
 
@@ -537,10 +707,124 @@ export default {
       nextTick(updatePdfWidth)
     }
 
+    function documentBaseName() {
+      return (displayTitle.value || 'សេចក្តីព្រាង')
+        .replace(/[\\/:*?"<>|]+/g, '-')
+        .trim()
+    }
+
+    function triggerDownload(url, fileName) {
+      if (!url || url === '#') return false
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      link.target = '_blank'
+      link.rel = 'noopener'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      return true
+    }
+
     function downloadFile() {
-      const url = fileTab.value === 'docx' ? props.docxUrl : props.pdfUrl
-      if (url && url !== '#') window.open(url, '_blank')
-      else message.info('មុខងារទាញយកនឹងមាននៅពេលភ្ជាប់ទៅ Backend')
+      const pdfUrl = temporaryDocumentStore.pdf_url || localPdfUrl.value || activeVersion.value?.pdf_url || props.pdfUrl
+      const docxUrl = temporaryDocumentStore.docx_url || localDocxUrl.value || props.docxUrl
+      const baseName = documentBaseName()
+      const downloadedPdf = triggerDownload(
+        pdfUrl,
+        temporaryDocumentStore.pdf_name || `${baseName}.pdf`
+      )
+      const downloadedDocx = triggerDownload(
+        docxUrl,
+        temporaryDocumentStore.docx_name || `${baseName}.docx`
+      )
+      if (downloadedPdf && downloadedDocx) {
+        message.success('កំពុងទាញយកឯកសារ PDF និង DOCX')
+      } else {
+        message.info('ត្រូវមានឯកសារ PDF និង DOCX ទាំងពីរ ដើម្បីទាញយក។')
+      }
+    }
+
+    function openVersionDocumentModal() {
+      versionDocumentForm.name = displayTitle.value
+      versionDocumentForm.version = activeVersion.value?.version_number || Math.max(1, parseInt(props.version) || 1)
+      showVersionDocumentModal.value = true
+    }
+
+    function confirmVersionDocument() {
+      const selectedVersion = versions.value.find(
+        item => item.version_number === versionDocumentForm.version
+      )
+      if (!selectedVersion || !versionDocumentForm.name.trim()) return
+      revokeUploadedObjectUrls()
+      displayTitle.value = versionDocumentForm.name.trim()
+      selectedVersionId.value = selectedVersion.id
+      localPdfUrl.value = selectedVersion.pdf_url || props.pdfUrl || SAMPLE_PDF
+      uploadedDocxObjectUrl = URL.createObjectURL(new Blob(
+        [`ឯកសារ DOCX គំរូសម្រាប់កិច្ចប្រជុំកំណែទី ${selectedVersion.version_number}`],
+        { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }
+      ))
+      localDocxUrl.value = selectedVersion.docx_url || props.docxUrl || uploadedDocxObjectUrl
+      const baseName = documentBaseName()
+      Object.assign(temporaryDocumentStore, {
+        name: displayTitle.value,
+        pdf_name: `${baseName}.pdf`,
+        pdf_url: localPdfUrl.value,
+        docx_name: `${baseName}.docx`,
+        docx_url: localDocxUrl.value
+      })
+      fileTab.value = 'pdf'
+      currentPage.value = 1
+      showVersionDocumentModal.value = false
+      message.success(`បានយកឯកសារពីកិច្ចប្រជុំកំណែទី ${selectedVersion.version_number}`)
+    }
+
+    function openUploadDocumentModal() {
+      uploadDocumentForm.name = displayTitle.value
+      pdfFileList.value = []
+      docxFileList.value = []
+      selectedPdfFile.value = null
+      selectedDocxFile.value = null
+      showUploadDocumentModal.value = true
+    }
+
+    function onPdfFileListChange(fileList) {
+      pdfFileList.value = fileList.slice(-1)
+      selectedPdfFile.value = pdfFileList.value[0]?.file || null
+    }
+
+    function onDocxFileListChange(fileList) {
+      docxFileList.value = fileList.slice(-1)
+      selectedDocxFile.value = docxFileList.value[0]?.file || null
+    }
+
+    function revokeUploadedObjectUrls() {
+      if (uploadedPdfObjectUrl) URL.revokeObjectURL(uploadedPdfObjectUrl)
+      if (uploadedDocxObjectUrl) URL.revokeObjectURL(uploadedDocxObjectUrl)
+      uploadedPdfObjectUrl = ''
+      uploadedDocxObjectUrl = ''
+    }
+
+    function confirmUploadedDocument() {
+      if (!canConfirmUpload.value) return
+      revokeUploadedObjectUrls()
+      uploadedPdfObjectUrl = URL.createObjectURL(selectedPdfFile.value)
+      uploadedDocxObjectUrl = URL.createObjectURL(selectedDocxFile.value)
+      displayTitle.value = uploadDocumentForm.name.trim()
+      localPdfUrl.value = uploadedPdfObjectUrl
+      localDocxUrl.value = uploadedDocxObjectUrl
+      const baseName = documentBaseName()
+      Object.assign(temporaryDocumentStore, {
+        name: displayTitle.value,
+        pdf_name: selectedPdfFile.value.name || `${baseName}.pdf`,
+        pdf_url: uploadedPdfObjectUrl,
+        docx_name: selectedDocxFile.value.name || `${baseName}.docx`,
+        docx_url: uploadedDocxObjectUrl
+      })
+      fileTab.value = 'pdf'
+      currentPage.value = 1
+      showUploadDocumentModal.value = false
+      message.success('បានផ្ទុកឯកសារ PDF និង DOCX ដោយជោគជ័យ')
     }
 
     function onKeydown(e) {
@@ -739,6 +1023,25 @@ export default {
       dismissTip()
       clearPendingQuote()
     })
+    watch(() => props.title, value => {
+      if (value) displayTitle.value = value
+    })
+    watch(() => props.version, value => {
+      revokeUploadedObjectUrls()
+      versions.value = getMockVersions(value)
+      selectedVersionId.value = versions.value[0]?.id ?? null
+      versionDocumentForm.version = Math.max(1, parseInt(value) || 1)
+      localPdfUrl.value = ''
+      localDocxUrl.value = ''
+      Object.assign(temporaryDocumentStore, {
+        name: '',
+        pdf_name: '',
+        pdf_url: '',
+        docx_name: '',
+        docx_url: ''
+      })
+      currentPage.value = 1
+    })
 
     onMounted(() => {
       comments.value = [
@@ -758,7 +1061,7 @@ export default {
       notes.value = [
         { id: 1, note: 'សេចក្តីព្រាងនេះគ្របដណ្តប់លើវិស័យទូរគមនាគមន៍ទាំងមូល។', creator: 'H.E. សុខ ហេង', created_at: '2026-07-05' }
       ]
-      versions.value = getMockVersions()
+      versions.value = getMockVersions(props.version)
       selectedVersionId.value = versions.value[0]?.id ?? null
       document.addEventListener('keydown', onKeydown)
       nextTick(() => {
@@ -775,10 +1078,14 @@ export default {
       document.removeEventListener('keydown', onKeydown)
       document.body.style.overflow = ''
       resizeObserver?.disconnect?.()
+      revokeUploadedObjectUrls()
     })
 
     return {
       pdfEmbed, pdfPane, pdfHost, pageWrap, viewerShell, commentInput,
+      displayTitle, showVersionDocumentModal, showUploadDocumentModal,
+      versionDocumentForm, uploadDocumentForm, meetingVersionOptions,
+      pdfFileList, docxFileList, uploadValidationMessage, canConfirmUpload,
       fileTab, showComments, sidebarTab, isFullscreen, currentPage, totalPages,
       selectedCommentId, comments, notes, versions, selectedVersionId, activeVersion,
       isLatestVersion, effectiveEditable, lockBanner,
@@ -788,6 +1095,8 @@ export default {
       openThreadId, openThread, replyDraftText,
       onPdfLoaded, onPdfRendered, onPdfError, toggleComments,
       enterFullscreen, exitFullscreen, downloadFile, onTextSelect,
+      openVersionDocumentModal, confirmVersionDocument,
+      openUploadDocumentModal, onPdfFileListChange, onDocxFileListChange, confirmUploadedDocument,
       dismissTip, startCommentFromSelection, clearPendingQuote,
       handleCommentEnter, handleNoteEnter, submitComment, submitNote,
       focusComment, removeComment, deleteNote, selectVersion, goToLatestVersion,
@@ -811,6 +1120,17 @@ export default {
 .header-title { font-size: 1rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .header-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.75rem; margin-top: 2px; }
 .header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.document-upload-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.upload-label { font-weight: 700; margin-bottom: 4px; }
+.upload-hint { color: var(--text-muted); font-size: 0.75rem; }
+.empty-document-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.empty-document-hint { max-width: 520px; margin-top: 12px; color: var(--text-muted); font-size: 0.78rem; line-height: 1.6; }
+
+@media (max-width: 640px) {
+  .document-upload-grid { grid-template-columns: 1fr; }
+  .empty-document-actions { flex-direction: column; }
+}
 
 .lock-banner { border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; }
 .lock-banner-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }

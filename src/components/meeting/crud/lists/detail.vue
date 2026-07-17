@@ -27,14 +27,26 @@
               <div v-if="record.meeting_code" class="mt-1"><code class="text-sm font-bold text-gray-500 font-mono bg-gray-100 px-2 py-0.5 rounded">{{ record.meeting_code }}</code></div>
             </div>
             <div class="flex-none flex items-center gap-2">
+              <n-tag size="small" :type="meetingStatusType" round>
+                {{ meetingStatusLabel }}
+              </n-tag>
               <n-button size="tiny" quaternary @click="showEditModal = true" class="!p-1">
                 <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </n-button>
-              <n-button size="tiny" :type="record.active ? 'warning' : 'primary'" @click="togglePublish(record)" class="!p-1">
+              <n-button size="tiny" :type="parseInt(record.active) > 0 ? 'warning' : 'primary'" @click="togglePublish(record)" class="!p-1">
                 <template #icon>
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                 </template>
-                <span class="text-xs">{{ record.active ? 'ឈប់ផ្សាយ' : 'ផ្សាយ' }}</span>
+                <span class="text-xs">{{ parseInt(record.active) > 0 ? 'ឈប់ផ្សាយ' : 'ផ្សាយ' }}</span>
+              </n-button>
+              <n-button size="tiny" type="success" secondary @click="openContinueMeetingModal">
+                <template #icon>
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14"/>
+                    <path d="m13 6 6 6-6 6"/>
+                  </svg>
+                </template>
+                <span class="text-xs">បន្តកិច្ចប្រជុំទៅកំណែថ្មី</span>
               </n-button>
               <n-button size="tiny" secondary @click="$router.push('/meetings/' + record.id + '/notes')" class="!p-1">
                 <template #icon>
@@ -691,6 +703,122 @@
       </div>
     </Transition>
 
+    <!-- Continue meeting as the next version -->
+    <n-modal
+      v-model:show="showContinueMeetingModal"
+      preset="card"
+      :title="`បន្តកិច្ចប្រជុំទៅកំណែទី ${meetingVersion + 1}`"
+      style="width: 92vw; max-width: 1100px"
+      :mask-closable="false"
+    >
+      <n-alert type="info" :show-icon="true" class="mb-5">
+        សូមបំពេញព័ត៌មានសម្រាប់កិច្ចប្រជុំកំណែទី {{ meetingVersion + 1 }}។ សេចក្តីព្រាងនឹងបន្តទៅកំណែថ្មីដោយស្វ័យប្រវត្តិ។
+      </n-alert>
+      <n-form
+        ref="continueMeetingFormRef"
+        :model="continueMeetingForm"
+        :rules="continueMeetingRules"
+        label-placement="top"
+        size="large"
+      >
+        <n-form-item label="កម្មវត្ថុ" path="objective" required>
+          <n-input
+            v-model:value="continueMeetingForm.objective"
+            type="textarea"
+            :autosize="{ minRows: 3, maxRows: 5 }"
+            placeholder="ឧ. កិច្ចប្រជុំពិនិត្យវឌ្ឍនភាពការងារ..."
+          />
+        </n-form-item>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+          <n-form-item label="ប្រភេទប្រជុំ" path="type_id">
+            <n-select
+              v-model:value="continueMeetingForm.type_id"
+              :options="continueTypeOptions"
+              filterable
+              clearable
+              placeholder="ជ្រើសរើសប្រភេទប្រជុំ"
+            />
+          </n-form-item>
+          <n-form-item label="កាលបរិច្ឆេទ" path="date" required>
+            <n-date-picker
+              v-model:formatted-value="continueMeetingForm.date"
+              value-format="yyyy-MM-dd"
+              type="date"
+              clearable
+              class="w-full"
+              placeholder="ជ្រើសរើសកាលបរិច្ឆេទ"
+            />
+          </n-form-item>
+          <n-form-item label="ម៉ោងចាប់ផ្ដើម" path="start" required>
+            <n-time-picker
+              v-model:formatted-value="continueMeetingForm.start"
+              value-format="HH:mm"
+              format="HH:mm"
+              clearable
+              class="w-full"
+              placeholder="08:00"
+            />
+          </n-form-item>
+          <n-form-item label="ម៉ោងបញ្ចប់" path="end" required>
+            <n-time-picker
+              v-model:formatted-value="continueMeetingForm.end"
+              value-format="HH:mm"
+              format="HH:mm"
+              clearable
+              class="w-full"
+              placeholder="11:30"
+            />
+          </n-form-item>
+          <n-form-item label="បន្ទប់ប្រជុំ" path="rooms">
+            <n-select
+              v-model:value="continueMeetingForm.rooms"
+              :options="continueRoomOptions"
+              filterable
+              multiple
+              clearable
+              placeholder="ជ្រើសរើសបន្ទប់ប្រជុំ"
+            />
+          </n-form-item>
+          <n-form-item label="ក្រសួង ស្ថាប័ន" path="organizations">
+            <n-select
+              v-model:value="continueMeetingForm.organizations"
+              :options="continueOrganizationOptions"
+              filterable
+              multiple
+              clearable
+              placeholder="ជ្រើសរើសក្រសួង ស្ថាប័ន"
+            />
+          </n-form-item>
+        </div>
+
+        <n-form-item label="ផ្លូវទៅកាន់ទីតាំងប្រជុំ" path="route">
+          <n-input
+            v-model:value="continueMeetingForm.route"
+            type="textarea"
+            :autosize="{ minRows: 2, maxRows: 4 }"
+            placeholder="ឧ. ចូលតាមច្រកទ្វារខាងកើត អគារទីស្ដីការ..."
+          />
+        </n-form-item>
+        <n-form-item label="សង្ខេបបឋមនៃកិច្ចប្រជុំ" path="summary">
+          <n-input
+            v-model:value="continueMeetingForm.summary"
+            type="textarea"
+            :autosize="{ minRows: 2, maxRows: 5 }"
+            placeholder="សរសេរសង្ខេបបឋមនៃកិច្ចប្រជុំ..."
+          />
+        </n-form-item>
+      </n-form>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <n-button @click="showContinueMeetingModal = false">បោះបង់</n-button>
+          <n-button type="success" :loading="savingContinuedMeeting" @click="saveContinuedMeeting">
+            រក្សាទុក
+          </n-button>
+        </div>
+      </template>
+    </n-modal>
+
     <!-- Agenda Modal -->
     <n-modal v-model:show="showAgendaForm" preset="card" title="បន្ថែមសកម្មភាពក្នុងរបៀបវារៈ" style="max-width:560px" :mask-closable="false">
       <n-form label-placement="top" size="medium">
@@ -724,7 +852,7 @@ import UpdateForm from '../widgets/update.vue'
 // ─── Mock Data ──────────────────────────────────────────────────────────
 function getMockRecord() {
   return {
-    id:1,objective:'កិច្ចប្រជុំពិនិត្យវឌ្ឍនភាពគម្រោងហេដ្ឋារចនាសម្ព័ន្ធ',date:'2026-07-15',start:'08:00',end:'11:30',status:1,
+    id:1,objective:'កិច្ចប្រជុំពិនិត្យវឌ្ឍនភាពគម្រោងហេដ្ឋារចនាសម្ព័ន្ធ',date:'2026-07-15',start:'08:00',end:'11:30',status:1,active:0,meeting_version:4,
     summary:'កិច្ចប្រជុំនេះមានគោលបំណងពិនិត្យវឌ្ឍនភាពនៃគម្រោងហេដ្ឋារចនាសម្ព័ន្ធសាធារណៈ និងសម្រេចលើដំណាក់កាលបន្ទាប់។',
     route:'ចូលតាមច្រកទ្វារខាងកើត អគារទីស្ដីការគណៈរដ្ឋមន្ត្រី ជាន់ទី៣ បន្ទប់លេខ 3A-០៥។ សូមយកជណ្ដើរយន្តខាងឆ្វេងដៃក្រោយឆ្លងកាត់សាលទទួលភ្ញៀវ។',
     type:{id:1,name:'ប្រជុំតាមដាន'},rooms:[{id:1,name:'សាលប្រជុំរដ្ឋមន្ត្រី'}],
@@ -788,6 +916,30 @@ export default {
     const store=useStore();const route=useRoute();const message=useMessage();const notify=useNotification()
     const record=ref(null);const loading=ref(true);const error=ref(false)
     const showEditModal = ref(false)
+    const isLocalMeeting = ref(false)
+    const showContinueMeetingModal = ref(false)
+    const savingContinuedMeeting = ref(false)
+    const continueMeetingFormRef = ref(null)
+    const continueMeetingForm = reactive({
+      objective: '',
+      type_id: null,
+      date: dateFormat(new Date(), 'yyyy-mm-dd'),
+      start: '08:00',
+      end: '11:30',
+      rooms: [],
+      organizations: [],
+      route: '',
+      summary: ''
+    })
+    const continueTypeOptions = ref([])
+    const continueRoomOptions = ref([])
+    const continueOrganizationOptions = ref([])
+    const continueMeetingRules = {
+      objective: { required: true, message: 'សូមបំពេញកម្មវត្ថុ', trigger: ['blur', 'input'] },
+      date: { required: true, message: 'សូមជ្រើសរើសកាលបរិច្ឆេទ', trigger: ['blur', 'change'] },
+      start: { required: true, message: 'សូមជ្រើសរើសម៉ោងចាប់ផ្ដើម', trigger: ['blur', 'change'] },
+      end: { required: true, message: 'សូមជ្រើសរើសម៉ោងបញ្ចប់', trigger: ['blur', 'change'] }
+    }
     function closeEditModal(actionStatus) {
       showEditModal.value = false
       if (parseInt(actionStatus) > 0) fetchMeeting()
@@ -927,15 +1079,152 @@ export default {
     }
 
     function togglePublish(record) {
+      if (isLocalMeeting.value || record.is_continuation_draft) {
+        record.active = parseInt(record.active) > 0 ? 0 : 1
+        message.success(parseInt(record.active) > 0 ? 'បានផ្សាយទៅកាន់ TV ហើយ' : 'បានឈប់ផ្សាយ')
+        return
+      }
       store.dispatch('meeting/toggleActive', { id: record.id })
         .then(res => {
           if (res.data?.ok) {
-            record.active = record.active ? 0 : 1
-            message.success(record.active ? 'បានផ្សាយទៅកាន់ TV ហើយ' : 'បានឈប់ផ្សាយ')
+            record.active = parseInt(record.active) > 0 ? 0 : 1
+            message.success(parseInt(record.active) > 0 ? 'បានផ្សាយទៅកាន់ TV ហើយ' : 'បានឈប់ផ្សាយ')
           }
         }).catch(() => notify.error({ title:'កំហុស', description:'បញ្ហាក្នុងពេលផ្សាយ' }))
     }
-    function formatDate(d){if(!d)return'មិនបានកំណត់';try{const dt=new Date(d);if(isNaN(dt.getTime()))return d;return dateFormat(dt,'dd-mm-yyyy')}catch(e){return d}}
+
+    function normalizeLookupRecords(response, getterName) {
+      const records = response?.data?.records
+      if (Array.isArray(records)) return records
+      if (Array.isArray(records?.data)) return records.data
+      const cached = store.getters[getterName]?.all
+      return Array.isArray(cached) ? cached : []
+    }
+
+    async function loadContinueMeetingOptions() {
+      const params = { page: 1, perPage: 1000, search: '' }
+      const results = await Promise.allSettled([
+        store.dispatch('meetingType/list', params),
+        store.dispatch('meetingRoom/list', params),
+        store.dispatch('meetingOrganization/list', params)
+      ])
+      const typeRecords = results[0].status === 'fulfilled'
+        ? normalizeLookupRecords(results[0].value, 'meetingType/records')
+        : normalizeLookupRecords(null, 'meetingType/records')
+      const roomRecords = results[1].status === 'fulfilled'
+        ? normalizeLookupRecords(results[1].value, 'meetingRoom/records')
+        : normalizeLookupRecords(null, 'meetingRoom/records')
+      const organizationRecords = results[2].status === 'fulfilled'
+        ? normalizeLookupRecords(results[2].value, 'meetingOrganization/records')
+        : normalizeLookupRecords(null, 'meetingOrganization/records')
+
+      continueTypeOptions.value = typeRecords.map(item => ({ label: item.name, value: item.id }))
+      continueRoomOptions.value = roomRecords.map(item => ({ label: item.name, value: item.id }))
+      continueOrganizationOptions.value = organizationRecords.map(item => ({ label: item.name, value: item.id }))
+    }
+
+    function openContinueMeetingModal() {
+      Object.assign(continueMeetingForm, {
+        objective: '',
+        type_id: null,
+        date: dateFormat(new Date(), 'yyyy-mm-dd'),
+        start: '08:00',
+        end: '11:30',
+        rooms: [],
+        organizations: [],
+        route: '',
+        summary: ''
+      })
+      showContinueMeetingModal.value = true
+      loadContinueMeetingOptions()
+    }
+
+    async function saveContinuedMeeting() {
+      try {
+        await continueMeetingFormRef.value?.validate()
+      } catch (e) {
+        return
+      }
+      if (continueMeetingForm.end <= continueMeetingForm.start) {
+        notify.warning({
+          title: 'ពិនិត្យម៉ោងប្រជុំ',
+          description: 'ម៉ោងបញ្ចប់ត្រូវតែក្រោយម៉ោងចាប់ផ្ដើម។'
+        })
+        return
+      }
+      savingContinuedMeeting.value = true
+      continueMeeting()
+      savingContinuedMeeting.value = false
+      showContinueMeetingModal.value = false
+    }
+
+    function continueMeeting() {
+      if (!record.value) return
+      const previous = record.value
+      const nextVersion = meetingVersion.value + 1
+      const draftTitle = legalDraft.value?.title || 'សេចក្តីព្រាង'
+
+      record.value = {
+        id: previous.id,
+        parent_meeting_id: previous.id,
+        meeting_version: nextVersion,
+        is_continuation_draft: true,
+        objective: continueMeetingForm.objective.trim(),
+        date: continueMeetingForm.date,
+        start: continueMeetingForm.start,
+        end: continueMeetingForm.end,
+        status: 1,
+        active: 0,
+        summary: continueMeetingForm.summary || '',
+        route: continueMeetingForm.route || '',
+        contact_info: '',
+        type: continueMeetingForm.type_id
+          ? {
+              id: continueMeetingForm.type_id,
+              name: continueTypeOptions.value.find(item => item.value === continueMeetingForm.type_id)?.label || ''
+            }
+          : null,
+        type_id: continueMeetingForm.type_id,
+        rooms: continueMeetingForm.rooms.map(id => ({
+          id,
+          name: continueRoomOptions.value.find(item => item.value === id)?.label || ''
+        })),
+        organizations: continueMeetingForm.organizations.map(id => ({
+          id,
+          name: continueOrganizationOptions.value.find(item => item.value === id)?.label || ''
+        })),
+        agendas: [],
+        listMembers: [],
+        members: [],
+        minister_preeng: [],
+        seichdey_preeng: [],
+        tech_reports: [],
+        reports: [],
+        other_documents: []
+      }
+      agendas.value = []
+      roomSeats.value = []
+      seatAssignments.value = []
+      preChecklist.value = []
+      postChecklist.value = []
+      Object.keys(docSections).forEach(key => {
+        docSections[key].files = []
+        docSections[key].pdfSrc = null
+      })
+      legalDraft.value = {
+        id: legalDraft.value?.id || null,
+        title: draftTitle,
+        status: 'progressing',
+        version_number: nextVersion,
+        regulator: legalDraft.value?.regulator || '',
+        pdf_url: '',
+        docx_url: ''
+      }
+      legalDraftPdfUrl.value = ''
+      isLocalMeeting.value = true
+      message.success(`បានបន្តកិច្ចប្រជុំទៅកំណែទី ${nextVersion}`)
+    }
+    function formatDate(d){if(!d)return'— — —';try{const dt=new Date(d);if(isNaN(dt.getTime()))return d;return dateFormat(dt,'dd-mm-yyyy')}catch(e){return d}}
 
     const meetingLeaders=computed(()=>{if(!record.value||!record.value.listMembers)return[];return record.value.listMembers.filter(lm=>lm.group==='lead_meeting'&&lm.role==='leader')})
     const roleLabels={leader:'ប្រធាន',deputy_leader:'អនុប្រធាន',member:'សមាជិក'}
@@ -1339,6 +1628,23 @@ export default {
     // ─── Legal Draft (single draft per meeting) ──────────────────────────
     const legalDraft=ref(null)
     const legalDraftPdfUrl=ref('')
+    const meetingVersion=computed(()=>{
+      const value=record.value?.meeting_version??record.value?.version_number??legalDraft.value?.version_number??1
+      return Math.max(1,parseInt(value)||1)
+    })
+    const meetingStatus=computed(()=>{
+      const statuses={
+        1:{label:'មិនទាន់ប្រជុំ',type:'default'},
+        2:{label:'កំពុងប្រជុំ',type:'warning'},
+        4:{label:'នៅបន្ត',type:'info'},
+        8:{label:'ប្ដូរ',type:'warning'},
+        16:{label:'ពន្យាពេល',type:'error'},
+        32:{label:'ចប់',type:'success'}
+      }
+      return statuses[Number(record.value?.status)]||{label:'មិនបានកំណត់ស្ថានភាព',type:'default'}
+    })
+    const meetingStatusLabel=computed(()=>meetingStatus.value.label)
+    const meetingStatusType=computed(()=>meetingStatus.value.type)
     const meetingNotStarted=computed(()=>record.value&&Number(record.value.status)===1)
     // Allow draft comments unless meeting is finished (status 32)
     const canCommentOnDraft=computed(()=>{
@@ -1449,10 +1755,11 @@ export default {
     // ─── Fetch ──────────────────────────────────────────────────────────
     function fetchMeeting(){
       const mid=route.params.id
-      if(useMockData.value||!mid){record.value=getMockRecord();hydrateAgendas();hydrateReferences();hydrateDraft();hydrateChecklists();fetchRoomSeats();loading.value=false;return}
+      if(useMockData.value||!mid){record.value=getMockRecord();isLocalMeeting.value=true;hydrateAgendas();hydrateReferences();hydrateDraft();hydrateChecklists();fetchRoomSeats();loading.value=false;return}
       loading.value=true;error.value=false
       store.dispatch('meeting/read',{id:mid}).then(res=>{
         if(res.data&&res.data.record){
+          isLocalMeeting.value=false
           const r=res.data.record
           // Map API 'members' → frontend 'listMembers' format
           if(r.members&&Array.isArray(r.members)){
@@ -1476,15 +1783,16 @@ export default {
             }))
           }
           record.value=r
-        }else{record.value=getMockRecord()}
+        }else{record.value=getMockRecord();isLocalMeeting.value=true}
         hydrateAgendas();hydrateReferences();hydrateDraft();hydrateChecklists();fetchRoomSeats();loading.value=false
-      }).catch(err=>{console.error(err);notify.error({title:'អានទិន្នន័យ',description:'មានបញ្ហាក្នុងពេលអានទិន្នន័យកិច្ចប្រជុំ។',duration:3000});record.value=getMockRecord();hydrateAgendas();hydrateReferences();hydrateDraft();hydrateChecklists();fetchRoomSeats();error.value=false;loading.value=false})
+      }).catch(err=>{console.error(err);notify.error({title:'អានទិន្នន័យ',description:'មានបញ្ហាក្នុងពេលអានទិន្នន័យកិច្ចប្រជុំ។',duration:3000});record.value=getMockRecord();isLocalMeeting.value=true;hydrateAgendas();hydrateReferences();hydrateDraft();hydrateChecklists();fetchRoomSeats();error.value=false;loading.value=false})
     }
     onMounted(()=>{fetchMeeting()})
     watch(()=>route.params.id,()=>{fetchMeeting()})
 
-    return{record,loading,error,togglePublish,formatDate,meetingLeaders,roleLabel,roleClass,groupLabel,groupClass,
+    return{record,loading,error,togglePublish,openContinueMeetingModal,saveContinuedMeeting,meetingVersion,meetingStatusLabel,meetingStatusType,formatDate,meetingLeaders,roleLabel,roleClass,groupLabel,groupClass,
       showEditModal, closeEditModal,
+      showContinueMeetingModal,savingContinuedMeeting,continueMeetingFormRef,continueMeetingForm,continueMeetingRules,continueTypeOptions,continueRoomOptions,continueOrganizationOptions,
       agendas,showAgendaForm,editingAgendaIndex,agendaForm,totalDuration,formatDuration,availableHandlers,openAddAgenda,openEditAgenda,saveAgenda,removeAgenda,
       roomSeats,seatLoading,headTableSeats,leftSideSeats,rightSideSeats,audienceSeats,audienceCols,seatColorClass,seatBadgeClass,roleBorderClass,roleRingClass,roleTextClass,roleBadgeClass,
       showSeatPicker,memberSearchQuery,filteredAvailableMembers,handleSeatClick,assignMemberToSeat,roleLabel,memberPanelWidth,startResizePanel,inlineMemberSearch,inlineSearchResults,newPerson,showAddPersonForm,countesyOptions,positionOptions,organizationOptions,saveNewPerson,loadFormOptions,toggleAddForm,onSearchInput,refreshParticipantTab,addMemberToMeeting,removeMemberFromMeeting,updateMemberGroupAndRole,roleOptions,groupOptions,attendantValue,attendantLabel,attendantType,attendantOptions,updateAttendant,
