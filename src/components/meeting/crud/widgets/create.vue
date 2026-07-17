@@ -216,15 +216,12 @@ export default {
       }))
     )
 
-    const rooms = computed( () => {
+    const roomOptions = computed( () => {
       const list = store.getters['meetingRoom/records'].all
       return Array.isArray(list) ? list.map( ( r ) => {
         return { label: r.name , value: r.id }
       }) : []
     })
-    const selectedRoom = ref(null)
-
-    const today = ref( new Date() )
 
     const rules = {
       objective: {
@@ -243,36 +240,14 @@ export default {
         trigger: ['blur', 'change']
       },
       end: {
-        hour: parseInt( dateFormat( today.value , 'H') ) ,
-        minutes: parseInt( dateFormat( today.value , 'MM') )
-      }
-    })
-
-    function clearForm(){
-      props.record.id = 0
-      props.record.objective = '' 
-      props.record.contact_info = '' 
-      props.record.route = '' 
-      props.record.type = null
-
-      meetingDateTime.year = parseInt( dateFormat( today.value , 'yyyy') )
-      meetingDateTime.month = parseInt( dateFormat( today.value , 'mm') )
-      meetingDateTime.day = parseInt( dateFormat( today.value , 'dd') )
-      meetingDateTime.start = {
-          hour : parseInt( dateFormat( today.value , 'H') ) ,
-          minutes : parseInt( dateFormat( today.value , 'MM') )
-      }
-      meetingDateTime.end = {
-        hour: parseInt( dateFormat( today.value , 'H') ) ,
-        minutes: parseInt( dateFormat( today.value , 'MM') )
-      }
-
-      props.record.date = [meetingDateTime.year,meetingDateTime.month,meetingDateTime.day].join('-')
-      props.record.start = [meetingDateTime.start.hour,meetingDateTime.start.minutes].join(':')
-      props.record.end = [meetingDateTime.end.hour,meetingDateTime.end.minutes].join(':')
-
-      if( props.show == true ){
-        props.onClose()
+        required: true,
+        message: 'សូមជ្រើសរើសម៉ោងបញ្ចប់',
+        trigger: ['blur', 'change'],
+        validator(rule, value) {
+          if (!value || !form.start) return true
+          if (value <= form.start) return new Error('ម៉ោងបញ្ចប់ត្រូវតែក្រោយម៉ោងចាប់ផ្ដើម')
+          return true
+        }
       }
     }
 
@@ -323,28 +298,30 @@ export default {
         return
       }
 
-      btnSavingLoadingRef.value = true
-      crud.value.create( 
+      saving.value = true
+      crud.value.create(
         {
-          objective: props.record.objective ,
-          date: props.record.date  ,
-          start: props.record.start ,
-          end: props.record.end ,
-          type_id: props.record.type_id ,
-          contact_info : props.record.contact_info ,
-          route : props.record.route ,
-          summary : props.record.summary ,
-          organizations: props.record.organizations
+          objective: form.objective ,
+          date: form.date  ,
+          start: form.start ,
+          end: form.end ,
+          type_id: form.type_id ,
+          contact_info : form.contact_info ,
+          route : form.route ,
+          summary : form.summary ,
+          organizations: form.organizations
         },
         ( res ) => {
           switch( res.status ){
-            case 200 : 
-            // ── Toggle the selected room on the newly created meeting ──
+            case 200 :
+            // ── Attach each selected room to the newly created meeting ──
             const newMeetingId = res.data.record?.id
-            if ( selectedRoom.value && newMeetingId ) {
-              store.dispatch( props.model.name+'/toggleMeetingRoom', {
-                room: { id: selectedRoom.value },
-                meeting: { id: newMeetingId }
+            if ( Array.isArray(form.rooms) && newMeetingId ) {
+              form.rooms.forEach((roomId) => {
+                store.dispatch( props.model.name+'/toggleMeetingRoom', {
+                  room: { id: roomId },
+                  meeting: { id: newMeetingId }
+                })
               })
             }
             notify.success({
@@ -352,6 +329,7 @@ export default {
               description: res.data?.message || 'បានបង្កើតកិច្ចប្រជុំដោយជោគជ័យ។',
               duration: 3000
             })
+            saving.value = false
             resetForm()
             props.onClose?.(1)
           }
@@ -372,21 +350,18 @@ export default {
       /**
        * Variables
        */
+      formRef ,
+      form ,
+      saving ,
       rules ,
+      typeOptions ,
+      organizationOptions ,
+      roomOptions ,
       /**
        * Functions
        */
       create ,
-      initial ,
-      maskOrEscClick ,
-      btnSavingLoadingRef ,
-      meetingDateTime ,
-      selectedType ,
-      types ,
-      organizations ,
-      selectedOrganization ,
-      rooms ,
-      selectedRoom
+      initial
     }
   }
 }
