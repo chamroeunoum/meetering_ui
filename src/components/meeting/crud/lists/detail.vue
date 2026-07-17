@@ -26,17 +26,17 @@
               <h1 class="font-moul text-xl leading-relaxed">{{ record.objective || 'គ្មានចំណងជើង' }}</h1>
             </div>
             <div class="flex-none flex items-center gap-2">
-              <n-tag size="small" type="info" round>
-                កិច្ចប្រជុំ កំណែទី {{ meetingVersion }}
+              <n-tag size="small" :type="meetingStatusType" round>
+                {{ meetingStatusLabel }}
               </n-tag>
               <n-button size="tiny" quaternary @click="showEditModal = true" class="!p-1">
                 <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </n-button>
-              <n-button size="tiny" :type="record.active ? 'warning' : 'primary'" @click="togglePublish(record)" class="!p-1">
+              <n-button size="tiny" :type="parseInt(record.active) > 0 ? 'warning' : 'primary'" @click="togglePublish(record)" class="!p-1">
                 <template #icon>
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                 </template>
-                <span class="text-xs">{{ record.active ? 'ឈប់ផ្សាយ' : 'ផ្សាយ' }}</span>
+                <span class="text-xs">{{ parseInt(record.active) > 0 ? 'ឈប់ផ្សាយ' : 'ផ្សាយ' }}</span>
               </n-button>
               <n-button size="tiny" type="success" secondary @click="openContinueMeetingModal">
                 <template #icon>
@@ -1072,15 +1072,15 @@ export default {
 
     function togglePublish(record) {
       if (isLocalMeeting.value || record.is_continuation_draft) {
-        record.active = record.active ? 0 : 1
-        message.success(record.active ? 'បានផ្សាយទៅកាន់ TV ហើយ' : 'បានឈប់ផ្សាយ')
+        record.active = parseInt(record.active) > 0 ? 0 : 1
+        message.success(parseInt(record.active) > 0 ? 'បានផ្សាយទៅកាន់ TV ហើយ' : 'បានឈប់ផ្សាយ')
         return
       }
       store.dispatch('meeting/toggleActive', { id: record.id })
         .then(res => {
           if (res.data?.ok) {
-            record.active = record.active ? 0 : 1
-            message.success(record.active ? 'បានផ្សាយទៅកាន់ TV ហើយ' : 'បានឈប់ផ្សាយ')
+            record.active = parseInt(record.active) > 0 ? 0 : 1
+            message.success(parseInt(record.active) > 0 ? 'បានផ្សាយទៅកាន់ TV ហើយ' : 'បានឈប់ផ្សាយ')
           }
         }).catch(() => notify.error({ title:'កំហុស', description:'បញ្ហាក្នុងពេលផ្សាយ' }))
     }
@@ -1624,6 +1624,19 @@ export default {
       const value=record.value?.meeting_version??record.value?.version_number??legalDraft.value?.version_number??1
       return Math.max(1,parseInt(value)||1)
     })
+    const meetingStatus=computed(()=>{
+      const statuses={
+        1:{label:'មិនទាន់ប្រជុំ',type:'default'},
+        2:{label:'កំពុងប្រជុំ',type:'warning'},
+        4:{label:'នៅបន្ត',type:'info'},
+        8:{label:'ប្ដូរ',type:'warning'},
+        16:{label:'ពន្យាពេល',type:'error'},
+        32:{label:'ចប់',type:'success'}
+      }
+      return statuses[Number(record.value?.status)]||{label:'មិនបានកំណត់ស្ថានភាព',type:'default'}
+    })
+    const meetingStatusLabel=computed(()=>meetingStatus.value.label)
+    const meetingStatusType=computed(()=>meetingStatus.value.type)
     const meetingNotStarted=computed(()=>record.value&&Number(record.value.status)===1)
     // Allow draft comments unless meeting is finished (status 32)
     const canCommentOnDraft=computed(()=>{
@@ -1769,7 +1782,7 @@ export default {
     onMounted(()=>{fetchMeeting()})
     watch(()=>route.params.id,()=>{fetchMeeting()})
 
-    return{record,loading,error,togglePublish,openContinueMeetingModal,saveContinuedMeeting,meetingVersion,formatDate,meetingLeaders,roleLabel,roleClass,groupLabel,groupClass,
+    return{record,loading,error,togglePublish,openContinueMeetingModal,saveContinuedMeeting,meetingVersion,meetingStatusLabel,meetingStatusType,formatDate,meetingLeaders,roleLabel,roleClass,groupLabel,groupClass,
       showEditModal, closeEditModal,
       showContinueMeetingModal,savingContinuedMeeting,continueMeetingFormRef,continueMeetingForm,continueMeetingRules,continueTypeOptions,continueRoomOptions,continueOrganizationOptions,
       agendas,showAgendaForm,editingAgendaIndex,agendaForm,totalDuration,formatDuration,availableHandlers,openAddAgenda,openEditAgenda,saveAgenda,removeAgenda,
