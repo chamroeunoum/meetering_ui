@@ -85,6 +85,7 @@ import MeetingDetailComponent from '../components/meeting/crud/lists/detail.vue'
 import DraftViewerComponent from '../components/meeting/crud/lists/draft-viewer.vue'
 import DraftTimelineComponent from '../components/meeting/crud/lists/timeline.vue'
 import MeetingScheduleComponent from '../components/meeting/crud/lists/schedule.vue'
+import MeetingNotesComponent from '../components/meeting/crud/lists/notes.vue'
 
 // People management
 import PeopleComponent from '../components/people/index.vue'
@@ -171,18 +172,23 @@ function getAuthenticatedRoutes() {
             },
             {
               name: 'DraftViewer',
-              path: ':meeting_id/draft/:draft_id',
+              path: ':id/draft/:draft_id',
               component: DraftViewerComponent,
             },
             {
               name: 'DraftTimeline',
-              path: ':meeting_id/timeline',
+              path: ':id/timeline',
               component: DraftTimelineComponent,
             },
             {
               name: 'MeetingSchedule',
               path: 'schedule',
               component: MeetingScheduleComponent,
+            },
+            {
+              name: 'MeetingNotes',
+              path: ':id/notes',
+              component: MeetingNotesComponent,
             },
           ],
         },

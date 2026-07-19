@@ -332,13 +332,16 @@ export default {
   bottom: 0.6vh;
   left: 1vw;
   right: 1vw;
-  font-size: clamp(48px, 7.5vh, 100px);
+  font-size: clamp(80px, 11vh, 140px);
   color: #b0bec5;
   text-align: left;
-  line-height: 1.6;
+  line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.meeting-leaders span {
+  font-size: clamp(30px, 6vh, 30px);
 }
 .meeting-leaders .more {
   color: #ffd700;
@@ -350,20 +353,20 @@ export default {
   text-align: center;
 }
 .place-date {
-  font-size: clamp(10px, 1.5vh, 20px);
+  font-size: clamp(20px, 1.5vh, 20px);
   color: #fff;
   font-weight: bold;
   line-height: 1.6;
 }
 .place-time {
-  font-size: clamp(14px, 2.2vh, 30px);
+  font-size: clamp(20px, 2.2vh, 30px);
   color: #ffd700;
   font-weight: bold;
   font-family: 'Moul', serif;
   line-height: 1.6;
 }
 .place-room {
-  font-size: clamp(9px, 1.3vh, 16px);
+  font-size: clamp(20px, 1.3vh, 16px);
   font-weight: bold;
   color: #90caf9;
   line-height: 1.6;
@@ -374,7 +377,7 @@ export default {
   display: inline-block;
   padding: 0.4vh 1.2vw;
   border-radius: 4px;
-  font-size: clamp(10px, 1.4vh, 18px);
+  font-size: clamp(20px, 1.4vh, 20px);
   font-family: 'Moul', serif;
   text-align: center;
   min-width: 6vw;

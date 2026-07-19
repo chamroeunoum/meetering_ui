@@ -24,6 +24,7 @@
           <div class="flex flex-wrap items-start justify-between mb-4">
             <div class="flex-1 min-w-0 mr-4">
               <h1 class="font-moul text-xl leading-relaxed">{{ record.objective || 'គ្មានចំណងជើង' }}</h1>
+              <div v-if="record.meeting_code" class="mt-1"><code class="text-sm font-bold text-gray-500 font-mono bg-gray-100 px-2 py-0.5 rounded">{{ record.meeting_code }}</code></div>
             </div>
             <div class="flex-none flex items-center gap-2">
               <n-popselect
@@ -55,6 +56,12 @@
                   </svg>
                 </template>
                 <span class="text-xs">បន្តកិច្ចប្រជុំទៅកំណែថ្មី</span>
+              </n-button>
+              <n-button size="tiny" secondary @click="$router.push('/meetings/' + record.id + '/notes')" class="!p-1">
+                <template #icon>
+                  <svg class="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </template>
+                <span class="text-xs">កំណត់ហេតុ</span>
               </n-button>
               <span v-if="record.type" class="inline-block px-3 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-700 border border-blue-200">{{ record.type.name }}</span>
             </div>
@@ -703,7 +710,7 @@
                   />
                   <div class="mt-3 flex justify-end">
                     <router-link
-                      :to="{ name: 'DraftTimeline', params: { meeting_id: record.id } }"
+                      :to="{ name: 'DraftTimeline', params: { id: record.id } }"
                       class="inline-flex items-center text-sm px-3 py-1.5 rounded border border-default transition-colors"
                     >
                       <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM11.75 6a.75.75 0 0 1 .75.75V12h3.75a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75V6.75a.75.75 0 0 1 .75-.75z" fill="currentColor"/></g></svg>
@@ -924,7 +931,7 @@ import { useMessage, useNotification } from 'naive-ui'
 import dateFormat from 'dateformat'
 import MemberForm from '../widgets/member.vue'
 import DraftPdfSection from '../widgets/draft-pdf-section.vue'
-import CreateForm from '../widgets/create.vue'
+import UpdateForm from '../widgets/update.vue'
 
 // ─── Mock Data ──────────────────────────────────────────────────────────
 function getMockRecord() {
@@ -987,7 +994,7 @@ function getMockDraft() {
 
 export default {
   name:'MeetingDetailPage',
-  components: { MemberForm, DraftPdfSection, CreateForm },
+  components: { MemberForm, DraftPdfSection, UpdateForm },
   props:{model:{type:Object,required:true,default:()=>({name:'meeting',title:'កិច្ចប្រជុំ'})}},
   setup(props){
     const store=useStore();const route=useRoute();const message=useMessage();const notify=useNotification()
