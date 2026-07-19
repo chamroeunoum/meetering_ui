@@ -9,7 +9,7 @@
     >
       <n-card
         class="w-[92vw] max-w-3xl font-ktr"
-        title="បន្ថែមកិច្ចប្រជុំ"
+        :title="isEditMode ? 'កែប្រែកិច្ចប្រជុំ' : 'បន្ថែមកិច្ចប្រជុំ'"
         :bordered="false"
         size="small"
         closable
@@ -21,7 +21,7 @@
             size="small"
             :loading="saving"
             :disabled="saving"
-            @click="create"
+            @click="save"
           >
             រក្សាទុក
           </n-button>
@@ -201,6 +201,9 @@ export default {
     const crud = ref(null)
     const saving = ref(false)
     const form = reactive(defaultForm())
+    const originalRoomIds = ref([])
+
+    const isEditMode = computed(() => parseInt(props.record?.id) > 0)
 
     const typeOptions = computed(() =>
       (store.getters['meetingType/records']?.all || []).map(o => ({
@@ -256,7 +259,6 @@ export default {
     }
 
     function initial() {
-      resetForm()
       store.commit(props.model.name + '/setColumns', ['id', 'name'])
       store.commit(props.model.name + '/setModel', props.model)
       crud.value = new Crud()
@@ -266,6 +268,23 @@ export default {
         store.getters[props.model.name + '/columns'].all
       )
 
+      if (isEditMode.value) {
+        const r = props.record
+        form.objective = r.objective || ''
+        form.summary = r.summary || ''
+        form.route = r.route || ''
+        form.contact_info = r.contact_info || ''
+        form.date = r.date || ''
+        form.start = r.start || ''
+        form.end = r.end || ''
+        form.type_id = r.type_id || (r.type ? r.type.id : null)
+        form.organizations = Array.isArray(r.organizations) ? r.organizations.map(o => o.id) : []
+        form.rooms = Array.isArray(r.rooms) ? r.rooms.map(rm => rm.id) : []
+        originalRoomIds.value = [...form.rooms]
+      } else {
+        resetForm()
+      }
+
       // Ensure lookup lists are available
       const listOpts = { page: 1, perPage: 1000, search: '' }
       if (!typeOptions.value.length) store.dispatch('meetingType/list', listOpts).catch(() => {})
@@ -273,7 +292,24 @@ export default {
       if (!roomOptions.value.length) store.dispatch('meetingRoom/list', listOpts).catch(() => {})
     }
 
-    async function create() {
+    function syncRooms(meetingId) {
+      const newRoomIds = Array.isArray(form.rooms) ? form.rooms : []
+      const oldRoomIds = isEditMode.value ? originalRoomIds.value : []
+      const changedRoomIds = [
+        ...oldRoomIds.filter(id => !newRoomIds.includes(id)),
+        ...newRoomIds.filter(id => !oldRoomIds.includes(id))
+      ]
+      return Promise.all(
+        changedRoomIds.map(id =>
+          store.dispatch(props.model.name + '/toggleMeetingRoom', {
+            room: { id },
+            meeting: { id: meetingId }
+          })
+        )
+      )
+    }
+
+    async function save() {
       try {
         await formRef.value?.validate()
       } catch (e) {
@@ -299,6 +335,50 @@ export default {
       }
 
       saving.value = true
+
+      if (isEditMode.value) {
+        syncRooms(props.record.id)
+          .then(() => store.dispatch(props.model.name + '/update', {
+            id: props.record.id,
+            objective: form.objective,
+            date: form.date,
+            start: form.start,
+            end: form.end,
+            type_id: form.type_id,
+            contact_info: form.contact_info,
+            route: form.route,
+            summary: form.summary,
+            organizations: form.organizations
+          }))
+          .then(res => {
+            saving.value = false
+            if (res.data?.ok) {
+              notify.success({
+                title: 'រក្សាទុកព័ត៌មាន',
+                description: res.data?.message || 'បានកែប្រែកិច្ចប្រជុំដោយជោគជ័យ។',
+                duration: 3000
+              })
+              props.onClose?.(1)
+            } else {
+              notify.error({
+                title: 'រក្សាទុកព័ត៌មាន',
+                description: 'មានបញ្ហាក្នុងពេលរក្សាទុកកិច្ចប្រជុំ។',
+                duration: 3000
+              })
+            }
+          })
+          .catch(error => {
+            saving.value = false
+            console.error(error)
+            notify.error({
+              title: 'រក្សាទុកព័ត៌មាន',
+              description: 'មានបញ្ហាក្នុងពេលរក្សាទុកកិច្ចប្រជុំ។',
+              duration: 3000
+            })
+          })
+        return
+      }
+
       crud.value.create(
         {
           objective: form.objective ,
@@ -357,10 +437,11 @@ export default {
       typeOptions ,
       organizationOptions ,
       roomOptions ,
+      isEditMode ,
       /**
        * Functions
        */
-      create ,
+      save ,
       initial
     }
   }

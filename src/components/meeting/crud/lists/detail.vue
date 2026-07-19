@@ -26,9 +26,18 @@
               <h1 class="font-moul text-xl leading-relaxed">{{ record.objective || 'គ្មានចំណងជើង' }}</h1>
             </div>
             <div class="flex-none flex items-center gap-2">
-              <n-tag size="small" :type="meetingStatusType" round>
-                {{ meetingStatusLabel }}
-              </n-tag>
+              <n-popselect
+                v-if="parseInt(record.active) > 0"
+                :value="Number(record.status) || 1"
+                :options="meetingStatusOptions"
+                size="small"
+                trigger="click"
+                @update:value="(val) => onSelectMeetingStatus(val, record)"
+              >
+                <n-tag size="small" :type="meetingStatusType" style="cursor:pointer" title="ចុចដើម្បីប្ដូរស្ថានភាព">
+                  {{ meetingStatusLabel }}
+                </n-tag>
+              </n-popselect>
               <n-button size="tiny" quaternary @click="showEditModal = true" class="!p-1">
                 <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </n-button>
@@ -56,7 +65,21 @@
             <div class="flex items-start space-x-2"><svg class="w-5 h-5 text-blue-500 flex-none mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 13c0-.55-.45-1-1-1h-4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1l1.27.67c.33.18.73-.06.73-.44v-2.46c0-.38-.4-.62-.73-.44L18 14v-1zm-7.2-9.1l-6 4.5c-.5.38-.8.97-.8 1.6v9c0 1.1.9 2 2 2h13c.55 0 1-.45 1-1s-.45-1-1-1H6v-9l6-4.5l6 4.5v1h2v-1c0-.63-.3-1.22-.8-1.6l-6-4.5a2.01 2.01 0 0 0-2.4 0z" fill="currentColor"></path></svg><div><div class="text-xs ">បន្ទប់ប្រជុំ</div><div class="font-bold ">{{ record.rooms && record.rooms.length > 0 ? record.rooms.map(r => r.name).join(', ') : 'មិនបានកំណត់' }}</div></div></div>
             <div class="flex items-start space-x-2"><svg class="w-5 h-5 text-blue-500 flex-none mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4zm0 1.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 0 0 0-5zM2 19v-.5C2 14.693 5.907 13 12 13s10 1.693 10 5.5v.5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm1.5 0a.5.5 0 0 0 .5.5h16a.5.5 0 0 0 .5-.5v-.5c0-2.003-3.358-4-8.5-4s-8.5 1.997-8.5 4v.5z" fill="currentColor"></path></g></svg><div><div class="text-xs ">ក្រសួង ស្ថាប័ន</div><div class="font-bold ">{{ record.organizations && record.organizations.length > 0 ? record.organizations.map(o => o.name).join(', ') : 'មិនបានកំណត់' }}</div></div></div>
           </div>
-          <div v-if="record.route" class="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+          <div v-if="hasStatusReason" class="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
+            <div class="flex items-start justify-between space-x-2">
+              <div class="flex items-start space-x-2">
+                <svg class="w-5 h-5 flex-none mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 0 0 0-17zM11 7a1 1 0 1 1 2 0a1 1 0 0 1-2 0zm1 3.75a.75.75 0 0 1 1.5 0v5.5a.75.75 0 0 1-1.5 0v-5.5z" fill="currentColor"></path></g></svg>
+                <div>
+                  <div class="text-xs font-bold mb-1">{{ statusReasonBoxTitle }}</div>
+                  <p class="text-sm leading-relaxed">{{ record.reason }}</p>
+                </div>
+              </div>
+              <n-button v-if="record.time_pending" size="tiny" type="warning" secondary @click="openSetTimeDialog" class="flex-none">
+                កំណត់ម៉ោង
+              </n-button>
+            </div>
+          </div>
+          <div v-else-if="record.route" class="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
             <div class="flex items-start space-x-2">
               <svg class="w-5 h-5  flex-none mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c3.196 0 6.348 1.116 8.35 3.855C22.235 8.425 23 11.268 23 14c0 6.075-11 8-11 8S1 20.075 1 14c0-2.732.765-5.575 2.65-8.145C5.652 3.116 8.804 2 12 2zm0 1.5c-2.804 0-5.598 1.009-7.35 3.395C3.015 9.144 2.5 11.615 2.5 14c0 4.325 7.51 6.25 9.223 6.484L12 20.5c1.686-.02 8.5-1.96 8.5-6.5 0-2.385-.515-4.856-2.15-7.105C16.598 4.509 13.804 3.5 12 3.5zM12 7a3.5 3.5 0 1 1 0 7a3.5 3.5 0 0 1 0-7zm0 1.5a2 2 0 1 0 0 4a2 2 0 0 0 0-4z" fill="currentColor"></path></g></svg>
               <div>
@@ -696,6 +719,67 @@
       </div>
     </Transition>
 
+    <!-- Change / Delay / Cancel reason (and optional new time) -->
+    <n-modal
+      v-model:show="showStatusReasonModal"
+      preset="card"
+      :title="statusReasonModalTitle"
+      style="max-width:480px"
+      :mask-closable="false"
+    >
+      <n-form label-placement="top" size="medium">
+        <n-form-item v-if="statusReasonMode !== 'time-only'" label="មូលហេតុ" required>
+          <n-input
+            v-model:value="statusReasonForm.reason"
+            type="textarea"
+            :autosize="{ minRows: 3, maxRows: 6 }"
+            placeholder="សូមបញ្ជាក់ពីមូលហេតុ..."
+          />
+        </n-form-item>
+        <div v-if="statusReasonMode !== 'time-only'" class="text-xs text-gray-400 mb-2">
+          ការកំណត់ម៉ោងថ្មី (មិនចាំបាច់ — អាចកំណត់នៅពេលក្រោយ)
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <n-form-item label="កាលបរិច្ឆេទថ្មី">
+            <n-date-picker
+              v-model:formatted-value="statusReasonForm.date"
+              value-format="yyyy-MM-dd"
+              type="date"
+              clearable
+              class="w-full"
+              placeholder="ជ្រើសរើសកាលបរិច្ឆេទ"
+            />
+          </n-form-item>
+          <n-form-item label="ម៉ោងចាប់ផ្ដើម">
+            <n-time-picker
+              v-model:formatted-value="statusReasonForm.start"
+              value-format="HH:mm"
+              format="HH:mm"
+              clearable
+              class="w-full"
+              placeholder="08:00"
+            />
+          </n-form-item>
+          <n-form-item label="ម៉ោងបញ្ចប់">
+            <n-time-picker
+              v-model:formatted-value="statusReasonForm.end"
+              value-format="HH:mm"
+              format="HH:mm"
+              clearable
+              class="w-full"
+              placeholder="11:30"
+            />
+          </n-form-item>
+        </div>
+      </n-form>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <n-button @click="showStatusReasonModal = false">បោះបង់</n-button>
+          <n-button type="primary" :loading="savingStatusReason" @click="submitStatusReason">រក្សាទុក</n-button>
+        </div>
+      </template>
+    </n-modal>
+
     <!-- Continue meeting as the next version -->
     <n-modal
       v-model:show="showContinueMeetingModal"
@@ -822,8 +906,8 @@
       <template #footer><div class="flex justify-end space-x-2"><n-button @click="showAgendaForm=false">បោះបង់</n-button><n-button type="primary" @click="saveAgenda" :disabled="!agendaForm.topic||!agendaForm.start_time||!agendaForm.duration">{{ editingAgendaIndex!==null?'កែប្រែ':'រក្សាទុក' }}</n-button></div></template>
     </n-modal>
 
-    <!-- Edit meeting -->
-    <update-form
+    <!-- Edit meeting (reuses the create-meeting form/component) -->
+    <create-form
       v-bind:model="model"
       v-bind:record="record"
       v-bind:show="showEditModal"
@@ -840,6 +924,7 @@ import { useMessage, useNotification } from 'naive-ui'
 import dateFormat from 'dateformat'
 import MemberForm from '../widgets/member.vue'
 import DraftPdfSection from '../widgets/draft-pdf-section.vue'
+import CreateForm from '../widgets/create.vue'
 
 // ─── Mock Data ──────────────────────────────────────────────────────────
 function getMockRecord() {
@@ -902,13 +987,24 @@ function getMockDraft() {
 
 export default {
   name:'MeetingDetailPage',
-  components: { MemberForm, DraftPdfSection },
+  components: { MemberForm, DraftPdfSection, CreateForm },
   props:{model:{type:Object,required:true,default:()=>({name:'meeting',title:'កិច្ចប្រជុំ'})}},
   setup(props){
     const store=useStore();const route=useRoute();const message=useMessage();const notify=useNotification()
     const record=ref(null);const loading=ref(true);const error=ref(false)
     const showEditModal = ref(false)
     const isLocalMeeting = ref(false)
+    // ─── Status change/delay/cancel reason dialog ─────────────────────────
+    const showStatusReasonModal = ref(false)
+    const statusReasonMode = ref('change') // 'change' | 'delay' | 'cancel' | 'time-only'
+    const savingStatusReason = ref(false)
+    const statusReasonForm = reactive({ reason: '', date: null, start: null, end: null })
+    const statusReasonModalTitle = computed(() => ({
+      change: 'ប្ដូរកិច្ចប្រជុំ',
+      delay: 'ពន្យាពេលកិច្ចប្រជុំ',
+      cancel: 'បោះបង់កិច្ចប្រជុំ',
+      'time-only': 'កំណត់ម៉ោងថ្មី'
+    }[statusReasonMode.value] || 'ប្ដូរស្ថានភាព'))
     const showContinueMeetingModal = ref(false)
     const savingContinuedMeeting = ref(false)
     const continueMeetingFormRef = ref(null)
@@ -1083,6 +1179,180 @@ export default {
             message.success(parseInt(record.active) > 0 ? 'បានផ្សាយទៅកាន់ TV ហើយ' : 'បានឈប់ផ្សាយ')
           }
         }).catch(() => notify.error({ title:'កំហុស', description:'បញ្ហាក្នុងពេលផ្សាយ' }))
+    }
+
+    // Meeting status options for the popselect (excludes the "continue to new version" status,
+    // which is a separate workflow handled by openContinueMeetingModal)
+    const meetingStatusOptions = [
+      { label: 'មិនទាន់ប្រជុំ', value: 1 },
+      { label: 'កំពុងប្រជុំ', value: 2 },
+      { label: 'ប្ដូរ', value: 8 },
+      { label: 'ពន្យាពេល', value: 16 },
+      { label: 'ចប់', value: 32 },
+      { label: 'បោះបង់', value: 64 }
+    ]
+    // Statuses that can be applied directly (no reason needed)
+    const meetingStatusActions = {
+      1: 'meeting/statusNew',
+      2: 'meeting/start',
+      32: 'meeting/end'
+    }
+    // Statuses that require a reason (and optionally a new date/time) via the dialog
+    const reasonStatusModes = { 8: 'change', 16: 'delay', 64: 'cancel' }
+
+    const hasStatusReason = computed(() => {
+      const s = Number(record.value?.status)
+      return [8, 16, 64].includes(s) && !!record.value?.reason
+    })
+    const statusReasonBoxTitle = computed(() => ({
+      8: 'មូលហេតុប្ដូរ',
+      16: 'មូលហេតុពន្យាពេល',
+      64: 'មូលហេតុបោះបង់'
+    }[Number(record.value?.status)] || 'មូលហេតុ'))
+
+    function onSelectMeetingStatus(value, record) {
+      if (Number(record.status) === value) return
+
+      if (reasonStatusModes[value]) {
+        statusReasonMode.value = reasonStatusModes[value]
+        statusReasonForm.reason = ''
+        statusReasonForm.date = null
+        statusReasonForm.start = null
+        statusReasonForm.end = null
+        showStatusReasonModal.value = true
+        return
+      }
+
+      const action = meetingStatusActions[value]
+      if (!action) return
+
+      if (isLocalMeeting.value || record.is_continuation_draft) {
+        record.status = value
+        message.success('បានប្ដូរស្ថានភាពប្រជុំ')
+        return
+      }
+
+      const previous = record.status
+      record.status = value
+      store.dispatch(action, { id: record.id })
+        .then(res => {
+          if (res.data?.ok) {
+            if (res.data.record?.status !== undefined) record.status = res.data.record.status
+            message.success('បានប្ដូរស្ថានភាពប្រជុំ')
+          } else {
+            record.status = previous
+            notify.error({ title:'កំហុស', description:'មិនអាចប្ដូរស្ថានភាពបានទេ' })
+          }
+        }).catch(() => {
+          record.status = previous
+          notify.error({ title:'កំហុស', description:'បញ្ហាក្នុងពេលប្ដូរស្ថានភាព' })
+        })
+    }
+
+    function openSetTimeDialog() {
+      statusReasonMode.value = 'time-only'
+      statusReasonForm.reason = ''
+      statusReasonForm.date = record.value.date || null
+      statusReasonForm.start = record.value.start || null
+      statusReasonForm.end = record.value.end || null
+      showStatusReasonModal.value = true
+    }
+
+    function submitStatusReason() {
+      const isTimeOnly = statusReasonMode.value === 'time-only'
+
+      if (!isTimeOnly && !statusReasonForm.reason?.trim()) {
+        notify.warning({ title: 'ពិនិត្យព័ត៌មាន', description: 'សូមបញ្ជាក់ពីមូលហេតុ', duration: 3000 })
+        return
+      }
+
+      const hasNewTime = !!(statusReasonForm.date && statusReasonForm.start && statusReasonForm.end)
+      if (isTimeOnly && !hasNewTime) {
+        notify.warning({ title: 'ពិនិត្យព័ត៌មាន', description: 'សូមបញ្ជាក់កាលបរិច្ឆេទ និងម៉ោងថ្មី', duration: 3000 })
+        return
+      }
+
+      savingStatusReason.value = true
+
+      if (isTimeOnly) {
+        if (isLocalMeeting.value || record.value.is_continuation_draft) {
+          record.value.date = statusReasonForm.date
+          record.value.start = statusReasonForm.start
+          record.value.end = statusReasonForm.end
+          record.value.time_pending = false
+          savingStatusReason.value = false
+          message.success('បានកំណត់ម៉ោងថ្មី')
+          showStatusReasonModal.value = false
+          return
+        }
+        store.dispatch('meeting/setStatusTime', {
+          id: record.value.id,
+          date: statusReasonForm.date,
+          start: statusReasonForm.start,
+          end: statusReasonForm.end
+        }).then(res => {
+          savingStatusReason.value = false
+          if (res.data?.ok) {
+            record.value.date = statusReasonForm.date
+            record.value.start = statusReasonForm.start
+            record.value.end = statusReasonForm.end
+            record.value.time_pending = false
+            message.success('បានកំណត់ម៉ោងថ្មី')
+            showStatusReasonModal.value = false
+          } else {
+            notify.error({ title: 'កំហុស', description: 'មិនអាចកំណត់ម៉ោងបានទេ' })
+          }
+        }).catch(() => {
+          savingStatusReason.value = false
+          notify.error({ title: 'កំហុស', description: 'បញ្ហាក្នុងពេលកំណត់ម៉ោង' })
+        })
+        return
+      }
+
+      const actionMap = { change: 'meeting/statusChange', delay: 'meeting/statusDelay', cancel: 'meeting/statusCancel' }
+      const statusValueMap = { change: 8, delay: 16, cancel: 64 }
+      const action = actionMap[statusReasonMode.value]
+      const targetStatus = statusValueMap[statusReasonMode.value]
+
+      const applyLocally = () => {
+        record.value.status = targetStatus
+        record.value.reason = statusReasonForm.reason
+        record.value.time_pending = !hasNewTime
+        if (hasNewTime) {
+          record.value.date = statusReasonForm.date
+          record.value.start = statusReasonForm.start
+          record.value.end = statusReasonForm.end
+        }
+      }
+
+      if (isLocalMeeting.value || record.value.is_continuation_draft) {
+        applyLocally()
+        savingStatusReason.value = false
+        message.success('បានប្ដូរស្ថានភាពប្រជុំ')
+        showStatusReasonModal.value = false
+        return
+      }
+
+      const payload = { id: record.value.id, reason: statusReasonForm.reason }
+      if (hasNewTime) {
+        payload.date = statusReasonForm.date
+        payload.start = statusReasonForm.start
+        payload.end = statusReasonForm.end
+      }
+
+      store.dispatch(action, payload).then(res => {
+        savingStatusReason.value = false
+        if (res.data?.ok) {
+          applyLocally()
+          message.success('បានប្ដូរស្ថានភាពប្រជុំ')
+          showStatusReasonModal.value = false
+        } else {
+          notify.error({ title: 'កំហុស', description: 'មិនអាចប្ដូរស្ថានភាពបានទេ' })
+        }
+      }).catch(() => {
+        savingStatusReason.value = false
+        notify.error({ title: 'កំហុស', description: 'បញ្ហាក្នុងពេលប្ដូរស្ថានភាព' })
+      })
     }
 
     function normalizeLookupRecords(response, getterName) {
@@ -1631,9 +1901,10 @@ export default {
         4:{label:'នៅបន្ត',type:'info'},
         8:{label:'ប្ដូរ',type:'warning'},
         16:{label:'ពន្យាពេល',type:'error'},
-        32:{label:'ចប់',type:'success'}
+        32:{label:'ចប់',type:'success'},
+        64:{label:'បោះបង់',type:'error'}
       }
-      return statuses[Number(record.value?.status)]||{label:'មិនបានកំណត់ស្ថានភាព',type:'default'}
+      return statuses[Number(record.value?.status)]||statuses[1]
     })
     const meetingStatusLabel=computed(()=>meetingStatus.value.label)
     const meetingStatusType=computed(()=>meetingStatus.value.type)
@@ -1782,7 +2053,10 @@ export default {
     onMounted(()=>{fetchMeeting()})
     watch(()=>route.params.id,()=>{fetchMeeting()})
 
-    return{record,loading,error,togglePublish,openContinueMeetingModal,saveContinuedMeeting,meetingVersion,meetingStatusLabel,meetingStatusType,formatDate,meetingLeaders,roleLabel,roleClass,groupLabel,groupClass,
+    return{record,loading,error,togglePublish,meetingStatusOptions,onSelectMeetingStatus,
+      hasStatusReason,statusReasonBoxTitle,openSetTimeDialog,
+      showStatusReasonModal,statusReasonMode,statusReasonModalTitle,statusReasonForm,savingStatusReason,submitStatusReason,
+      openContinueMeetingModal,saveContinuedMeeting,meetingVersion,meetingStatusLabel,meetingStatusType,formatDate,meetingLeaders,roleLabel,roleClass,groupLabel,groupClass,
       showEditModal, closeEditModal,
       showContinueMeetingModal,savingContinuedMeeting,continueMeetingFormRef,continueMeetingForm,continueMeetingRules,continueTypeOptions,continueRoomOptions,continueOrganizationOptions,
       agendas,showAgendaForm,editingAgendaIndex,agendaForm,totalDuration,formatDuration,availableHandlers,openAddAgenda,openEditAgenda,saveAgenda,removeAgenda,
