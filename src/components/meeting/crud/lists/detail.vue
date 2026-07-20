@@ -73,17 +73,12 @@
             <div class="flex items-start space-x-2"><svg class="w-5 h-5 text-blue-500 flex-none mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4zm0 1.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 0 0 0-5zM2 19v-.5C2 14.693 5.907 13 12 13s10 1.693 10 5.5v.5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm1.5 0a.5.5 0 0 0 .5.5h16a.5.5 0 0 0 .5-.5v-.5c0-2.003-3.358-4-8.5-4s-8.5 1.997-8.5 4v.5z" fill="currentColor"></path></g></svg><div><div class="text-xs ">ក្រសួង ស្ថាប័ន</div><div class="font-bold ">{{ record.organizations && record.organizations.length > 0 ? record.organizations.map(o => o.name).join(', ') : 'មិនបានកំណត់' }}</div></div></div>
           </div>
           <div v-if="hasStatusReason" class="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
-            <div class="flex items-start justify-between space-x-2">
-              <div class="flex items-start space-x-2">
-                <svg class="w-5 h-5 flex-none mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 0 0 0-17zM11 7a1 1 0 1 1 2 0a1 1 0 0 1-2 0zm1 3.75a.75.75 0 0 1 1.5 0v5.5a.75.75 0 0 1-1.5 0v-5.5z" fill="currentColor"></path></g></svg>
-                <div>
-                  <div class="text-xs font-bold mb-1">{{ statusReasonBoxTitle }}</div>
-                  <p class="text-sm leading-relaxed">{{ record.reason }}</p>
-                </div>
+            <div class="flex items-start space-x-2">
+              <svg class="w-5 h-5 flex-none mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 0 0 0-17zM11 7a1 1 0 1 1 2 0a1 1 0 0 1-2 0zm1 3.75a.75.75 0 0 1 1.5 0v5.5a.75.75 0 0 1-1.5 0v-5.5z" fill="currentColor"></path></g></svg>
+              <div>
+                <div class="text-xs font-bold mb-1">{{ statusReasonBoxTitle }}</div>
+                <p class="text-sm leading-relaxed">{{ record.remark }}</p>
               </div>
-              <n-button v-if="record.time_pending" size="tiny" type="warning" secondary @click="openSetTimeDialog" class="flex-none">
-                កំណត់ម៉ោង
-              </n-button>
             </div>
           </div>
           <div v-else-if="record.route" class="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
@@ -726,7 +721,7 @@
       </div>
     </Transition>
 
-    <!-- Change / Delay / Cancel reason (and optional new time) -->
+    <!-- Delay / Cancel reason -->
     <n-modal
       v-model:show="showStatusReasonModal"
       preset="card"
@@ -735,7 +730,7 @@
       :mask-closable="false"
     >
       <n-form label-placement="top" size="medium">
-        <n-form-item v-if="statusReasonMode !== 'time-only'" label="មូលហេតុ" required>
+        <n-form-item label="មូលហេតុ" required>
           <n-input
             v-model:value="statusReasonForm.reason"
             type="textarea"
@@ -743,41 +738,6 @@
             placeholder="សូមបញ្ជាក់ពីមូលហេតុ..."
           />
         </n-form-item>
-        <div v-if="statusReasonMode !== 'time-only'" class="text-xs text-gray-400 mb-2">
-          ការកំណត់ម៉ោងថ្មី (មិនចាំបាច់ — អាចកំណត់នៅពេលក្រោយ)
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-          <n-form-item label="កាលបរិច្ឆេទថ្មី">
-            <n-date-picker
-              v-model:formatted-value="statusReasonForm.date"
-              value-format="yyyy-MM-dd"
-              type="date"
-              clearable
-              class="w-full"
-              placeholder="ជ្រើសរើសកាលបរិច្ឆេទ"
-            />
-          </n-form-item>
-          <n-form-item label="ម៉ោងចាប់ផ្ដើម">
-            <n-time-picker
-              v-model:formatted-value="statusReasonForm.start"
-              value-format="HH:mm"
-              format="HH:mm"
-              clearable
-              class="w-full"
-              placeholder="08:00"
-            />
-          </n-form-item>
-          <n-form-item label="ម៉ោងបញ្ចប់">
-            <n-time-picker
-              v-model:formatted-value="statusReasonForm.end"
-              value-format="HH:mm"
-              format="HH:mm"
-              clearable
-              class="w-full"
-              placeholder="11:30"
-            />
-          </n-form-item>
-        </div>
       </n-form>
       <template #footer>
         <div class="flex justify-end gap-2">
@@ -925,13 +885,13 @@
 
 <script>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { useMessage, useNotification } from 'naive-ui'
 import dateFormat from 'dateformat'
 import MemberForm from '../widgets/member.vue'
 import DraftPdfSection from '../widgets/draft-pdf-section.vue'
-import UpdateForm from '../widgets/update.vue'
+import CreateForm from '../widgets/create.vue'
 
 // ─── Mock Data ──────────────────────────────────────────────────────────
 function getMockRecord() {
@@ -994,23 +954,21 @@ function getMockDraft() {
 
 export default {
   name:'MeetingDetailPage',
-  components: { MemberForm, DraftPdfSection, UpdateForm },
+  components: { MemberForm, DraftPdfSection, CreateForm },
   props:{model:{type:Object,required:true,default:()=>({name:'meeting',title:'កិច្ចប្រជុំ'})}},
   setup(props){
-    const store=useStore();const route=useRoute();const message=useMessage();const notify=useNotification()
+    const store=useStore();const route=useRoute();const router=useRouter();const message=useMessage();const notify=useNotification()
     const record=ref(null);const loading=ref(true);const error=ref(false)
     const showEditModal = ref(false)
     const isLocalMeeting = ref(false)
-    // ─── Status change/delay/cancel reason dialog ─────────────────────────
+    // ─── Status delay/cancel reason dialog ─────────────────────────────────
     const showStatusReasonModal = ref(false)
-    const statusReasonMode = ref('change') // 'change' | 'delay' | 'cancel' | 'time-only'
+    const statusReasonMode = ref('delay') // 'delay' | 'cancel'
     const savingStatusReason = ref(false)
-    const statusReasonForm = reactive({ reason: '', date: null, start: null, end: null })
+    const statusReasonForm = reactive({ reason: '' })
     const statusReasonModalTitle = computed(() => ({
-      change: 'ប្ដូរកិច្ចប្រជុំ',
       delay: 'ពន្យាពេលកិច្ចប្រជុំ',
-      cancel: 'បោះបង់កិច្ចប្រជុំ',
-      'time-only': 'កំណត់ម៉ោងថ្មី'
+      cancel: 'បោះបង់កិច្ចប្រជុំ'
     }[statusReasonMode.value] || 'ប្ដូរស្ថានភាព'))
     const showContinueMeetingModal = ref(false)
     const savingContinuedMeeting = ref(false)
@@ -1193,7 +1151,6 @@ export default {
     const meetingStatusOptions = [
       { label: 'មិនទាន់ប្រជុំ', value: 1 },
       { label: 'កំពុងប្រជុំ', value: 2 },
-      { label: 'ប្ដូរ', value: 8 },
       { label: 'ពន្យាពេល', value: 16 },
       { label: 'ចប់', value: 32 },
       { label: 'បោះបង់', value: 64 }
@@ -1204,15 +1161,14 @@ export default {
       2: 'meeting/start',
       32: 'meeting/end'
     }
-    // Statuses that require a reason (and optionally a new date/time) via the dialog
-    const reasonStatusModes = { 8: 'change', 16: 'delay', 64: 'cancel' }
+    // Statuses that require a reason via the dialog
+    const reasonStatusModes = { 16: 'delay', 64: 'cancel' }
 
     const hasStatusReason = computed(() => {
       const s = Number(record.value?.status)
-      return [8, 16, 64].includes(s) && !!record.value?.reason
+      return [16, 64].includes(s) && !!record.value?.remark
     })
     const statusReasonBoxTitle = computed(() => ({
-      8: 'មូលហេតុប្ដូរ',
       16: 'មូលហេតុពន្យាពេល',
       64: 'មូលហេតុបោះបង់'
     }[Number(record.value?.status)] || 'មូលហេតុ'))
@@ -1223,9 +1179,6 @@ export default {
       if (reasonStatusModes[value]) {
         statusReasonMode.value = reasonStatusModes[value]
         statusReasonForm.reason = ''
-        statusReasonForm.date = null
-        statusReasonForm.start = null
-        statusReasonForm.end = null
         showStatusReasonModal.value = true
         return
       }
@@ -1256,80 +1209,22 @@ export default {
         })
     }
 
-    function openSetTimeDialog() {
-      statusReasonMode.value = 'time-only'
-      statusReasonForm.reason = ''
-      statusReasonForm.date = record.value.date || null
-      statusReasonForm.start = record.value.start || null
-      statusReasonForm.end = record.value.end || null
-      showStatusReasonModal.value = true
-    }
-
     function submitStatusReason() {
-      const isTimeOnly = statusReasonMode.value === 'time-only'
-
-      if (!isTimeOnly && !statusReasonForm.reason?.trim()) {
+      if (!statusReasonForm.reason?.trim()) {
         notify.warning({ title: 'ពិនិត្យព័ត៌មាន', description: 'សូមបញ្ជាក់ពីមូលហេតុ', duration: 3000 })
-        return
-      }
-
-      const hasNewTime = !!(statusReasonForm.date && statusReasonForm.start && statusReasonForm.end)
-      if (isTimeOnly && !hasNewTime) {
-        notify.warning({ title: 'ពិនិត្យព័ត៌មាន', description: 'សូមបញ្ជាក់កាលបរិច្ឆេទ និងម៉ោងថ្មី', duration: 3000 })
         return
       }
 
       savingStatusReason.value = true
 
-      if (isTimeOnly) {
-        if (isLocalMeeting.value || record.value.is_continuation_draft) {
-          record.value.date = statusReasonForm.date
-          record.value.start = statusReasonForm.start
-          record.value.end = statusReasonForm.end
-          record.value.time_pending = false
-          savingStatusReason.value = false
-          message.success('បានកំណត់ម៉ោងថ្មី')
-          showStatusReasonModal.value = false
-          return
-        }
-        store.dispatch('meeting/setStatusTime', {
-          id: record.value.id,
-          date: statusReasonForm.date,
-          start: statusReasonForm.start,
-          end: statusReasonForm.end
-        }).then(res => {
-          savingStatusReason.value = false
-          if (res.data?.ok) {
-            record.value.date = statusReasonForm.date
-            record.value.start = statusReasonForm.start
-            record.value.end = statusReasonForm.end
-            record.value.time_pending = false
-            message.success('បានកំណត់ម៉ោងថ្មី')
-            showStatusReasonModal.value = false
-          } else {
-            notify.error({ title: 'កំហុស', description: 'មិនអាចកំណត់ម៉ោងបានទេ' })
-          }
-        }).catch(() => {
-          savingStatusReason.value = false
-          notify.error({ title: 'កំហុស', description: 'បញ្ហាក្នុងពេលកំណត់ម៉ោង' })
-        })
-        return
-      }
-
-      const actionMap = { change: 'meeting/statusChange', delay: 'meeting/statusDelay', cancel: 'meeting/statusCancel' }
-      const statusValueMap = { change: 8, delay: 16, cancel: 64 }
+      const actionMap = { delay: 'meeting/statusDelay', cancel: 'meeting/statusCancel' }
+      const statusValueMap = { delay: 16, cancel: 64 }
       const action = actionMap[statusReasonMode.value]
       const targetStatus = statusValueMap[statusReasonMode.value]
 
       const applyLocally = () => {
         record.value.status = targetStatus
-        record.value.reason = statusReasonForm.reason
-        record.value.time_pending = !hasNewTime
-        if (hasNewTime) {
-          record.value.date = statusReasonForm.date
-          record.value.start = statusReasonForm.start
-          record.value.end = statusReasonForm.end
-        }
+        record.value.remark = statusReasonForm.reason
       }
 
       if (isLocalMeeting.value || record.value.is_continuation_draft) {
@@ -1340,14 +1235,7 @@ export default {
         return
       }
 
-      const payload = { id: record.value.id, reason: statusReasonForm.reason }
-      if (hasNewTime) {
-        payload.date = statusReasonForm.date
-        payload.start = statusReasonForm.start
-        payload.end = statusReasonForm.end
-      }
-
-      store.dispatch(action, payload).then(res => {
+      store.dispatch(action, { id: record.value.id, reason: statusReasonForm.reason }).then(res => {
         savingStatusReason.value = false
         if (res.data?.ok) {
           applyLocally()
@@ -1422,76 +1310,114 @@ export default {
         return
       }
       savingContinuedMeeting.value = true
-      continueMeeting()
-      savingContinuedMeeting.value = false
-      showContinueMeetingModal.value = false
+      try {
+        await continueMeeting()
+      } finally {
+        savingContinuedMeeting.value = false
+      }
     }
 
-    function continueMeeting() {
+    // Continuing a meeting creates a REAL new meeting row (pid = this meeting's id),
+    // reusing the same legal draft — see MeetingController::create(). The only
+    // client-only fallback left is isLocalMeeting (offline/demo mode, nothing to save to).
+    async function continueMeeting() {
       if (!record.value) return
-      const previous = record.value
-      const nextVersion = meetingVersion.value + 1
-      const draftTitle = legalDraft.value?.title || 'សេចក្តីព្រាង'
 
-      record.value = {
-        id: previous.id,
-        parent_meeting_id: previous.id,
-        meeting_version: nextVersion,
-        is_continuation_draft: true,
-        objective: continueMeetingForm.objective.trim(),
-        date: continueMeetingForm.date,
-        start: continueMeetingForm.start,
-        end: continueMeetingForm.end,
-        status: 1,
-        active: 0,
-        summary: continueMeetingForm.summary || '',
-        route: continueMeetingForm.route || '',
-        contact_info: '',
-        type: continueMeetingForm.type_id
-          ? {
-              id: continueMeetingForm.type_id,
-              name: continueTypeOptions.value.find(item => item.value === continueMeetingForm.type_id)?.label || ''
-            }
-          : null,
-        type_id: continueMeetingForm.type_id,
-        rooms: continueMeetingForm.rooms.map(id => ({
-          id,
-          name: continueRoomOptions.value.find(item => item.value === id)?.label || ''
-        })),
-        organizations: continueMeetingForm.organizations.map(id => ({
-          id,
-          name: continueOrganizationOptions.value.find(item => item.value === id)?.label || ''
-        })),
-        agendas: [],
-        listMembers: [],
-        members: [],
-        minister_preeng: [],
-        seichdey_preeng: [],
-        tech_reports: [],
-        reports: [],
-        other_documents: []
+      if (isLocalMeeting.value || record.value.is_continuation_draft) {
+        const nextVersion = meetingVersion.value + 1
+        const draftTitle = legalDraft.value?.title || 'សេចក្តីព្រាង'
+        record.value = {
+          id: record.value.id,
+          parent_meeting_id: record.value.id,
+          meeting_version: nextVersion,
+          is_continuation_draft: true,
+          objective: continueMeetingForm.objective.trim(),
+          date: continueMeetingForm.date,
+          start: continueMeetingForm.start,
+          end: continueMeetingForm.end,
+          status: 1,
+          active: 0,
+          summary: continueMeetingForm.summary || '',
+          route: continueMeetingForm.route || '',
+          contact_info: '',
+          type: continueMeetingForm.type_id
+            ? {
+                id: continueMeetingForm.type_id,
+                name: continueTypeOptions.value.find(item => item.value === continueMeetingForm.type_id)?.label || ''
+              }
+            : null,
+          type_id: continueMeetingForm.type_id,
+          rooms: continueMeetingForm.rooms.map(id => ({
+            id,
+            name: continueRoomOptions.value.find(item => item.value === id)?.label || ''
+          })),
+          organizations: continueMeetingForm.organizations.map(id => ({
+            id,
+            name: continueOrganizationOptions.value.find(item => item.value === id)?.label || ''
+          })),
+          agendas: [],
+          listMembers: [],
+          members: [],
+          minister_preeng: [],
+          seichdey_preeng: [],
+          tech_reports: [],
+          reports: [],
+          other_documents: []
+        }
+        agendas.value = []
+        roomSeats.value = []
+        seatAssignments.value = []
+        preChecklist.value = []
+        postChecklist.value = []
+        Object.keys(docSections).forEach(key => {
+          docSections[key].files = []
+          docSections[key].pdfSrc = null
+        })
+        legalDraft.value = {
+          id: legalDraft.value?.id || null,
+          title: draftTitle,
+          status: 'progressing',
+          version_number: nextVersion,
+          regulator: legalDraft.value?.regulator || '',
+          pdf_url: '',
+          docx_url: ''
+        }
+        legalDraftPdfUrl.value = ''
+        showContinueMeetingModal.value = false
+        message.success(`បានបន្តកិច្ចប្រជុំទៅកំណែទី ${nextVersion}`)
+        return
       }
-      agendas.value = []
-      roomSeats.value = []
-      seatAssignments.value = []
-      preChecklist.value = []
-      postChecklist.value = []
-      Object.keys(docSections).forEach(key => {
-        docSections[key].files = []
-        docSections[key].pdfSrc = null
-      })
-      legalDraft.value = {
-        id: legalDraft.value?.id || null,
-        title: draftTitle,
-        status: 'progressing',
-        version_number: nextVersion,
-        regulator: legalDraft.value?.regulator || '',
-        pdf_url: '',
-        docx_url: ''
+
+      try {
+        const res = await store.dispatch('meeting/create', {
+          pid: record.value.id,
+          objective: continueMeetingForm.objective.trim(),
+          date: continueMeetingForm.date,
+          start: continueMeetingForm.start,
+          end: continueMeetingForm.end,
+          type_id: continueMeetingForm.type_id,
+          contact_info: '',
+          route: continueMeetingForm.route || '',
+          summary: continueMeetingForm.summary || '',
+          organizations: continueMeetingForm.organizations
+        })
+        if (!res.data?.ok || !res.data?.record?.id) {
+          notify.error({ title: 'បន្តកិច្ចប្រជុំ', description: 'មិនអាចបន្តកិច្ចប្រជុំបានទេ។', duration: 3000 })
+          return
+        }
+        const newMeetingId = res.data.record.id
+        if (Array.isArray(continueMeetingForm.rooms) && continueMeetingForm.rooms.length) {
+          await Promise.allSettled(continueMeetingForm.rooms.map(roomId =>
+            store.dispatch('meeting/toggleMeetingRoom', { room: { id: roomId }, meeting: { id: newMeetingId } })
+          ))
+        }
+        showContinueMeetingModal.value = false
+        message.success('បានបន្តកិច្ចប្រជុំទៅកំណែថ្មី')
+        router.push({ name: 'MeetingDetail', params: { id: newMeetingId } })
+      } catch (e) {
+        console.error(e)
+        notify.error({ title: 'បន្តកិច្ចប្រជុំ', description: 'មានបញ្ហាក្នុងពេលបន្តកិច្ចប្រជុំ។', duration: 3000 })
       }
-      legalDraftPdfUrl.value = ''
-      isLocalMeeting.value = true
-      message.success(`បានបន្តកិច្ចប្រជុំទៅកំណែទី ${nextVersion}`)
     }
     function formatDate(d){if(!d)return'— — —';try{const dt=new Date(d);if(isNaN(dt.getTime()))return d;return dateFormat(dt,'dd-mm-yyyy')}catch(e){return d}}
 
@@ -1923,7 +1849,13 @@ export default {
       return s!==32
     })
     function hydrateDraft(){
-      legalDraft.value=getMockDraft()
+      if(record.value?.legalDraft){
+        legalDraft.value=record.value.legalDraft
+      }else if(isLocalMeeting.value){
+        legalDraft.value=getMockDraft()
+      }else{
+        legalDraft.value=null
+      }
       legalDraftPdfUrl.value=(legalDraft.value&&legalDraft.value.pdf_url&&legalDraft.value.pdf_url!=='#')
         ? legalDraft.value.pdf_url
         : ''
@@ -2061,7 +1993,7 @@ export default {
     watch(()=>route.params.id,()=>{fetchMeeting()})
 
     return{record,loading,error,togglePublish,meetingStatusOptions,onSelectMeetingStatus,
-      hasStatusReason,statusReasonBoxTitle,openSetTimeDialog,
+      hasStatusReason,statusReasonBoxTitle,
       showStatusReasonModal,statusReasonMode,statusReasonModalTitle,statusReasonForm,savingStatusReason,submitStatusReason,
       openContinueMeetingModal,saveContinuedMeeting,meetingVersion,meetingStatusLabel,meetingStatusType,formatDate,meetingLeaders,roleLabel,roleClass,groupLabel,groupClass,
       showEditModal, closeEditModal,

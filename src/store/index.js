@@ -42,6 +42,7 @@ import meetingRoomSeat from './modules/meeting/room-seat'
 import meetingSeatAssignment from './modules/meeting/seat-assignment'
 import meetingCountesy from './modules/meeting/countesy'
 import meetingPosition from './modules/meeting/position'
+import meetingDraftWorkspace from './modules/meeting/draft-workspace'
 
 const debug = process.env.NODE_ENV !== 'production'
 
@@ -81,7 +82,8 @@ export default createStore({
     meetingSeatAssignment ,
     meetingOrganization ,
     meetingCountesy ,
-    meetingPosition
+    meetingPosition ,
+    meetingDraftWorkspace
   },
   strict: debug,
   plugins: debug ? 

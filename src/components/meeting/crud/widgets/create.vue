@@ -47,7 +47,7 @@
             </n-form-item>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-              <n-form-item label="ប្រភេទប្រជុំ" path="type_id">
+              <n-form-item label="ប្រភេទប្រជុំ" path="type_id" required>
                 <n-select
                   v-model:value="form.type_id"
                   filterable
@@ -231,6 +231,12 @@ export default {
         required: true,
         message: 'សូមបំពេញកម្មវត្ថុ',
         trigger: ['blur', 'input']
+      },
+      type_id: {
+        required: true,
+        type: 'number',
+        message: 'សូមជ្រើសរើសប្រភេទប្រជុំ',
+        trigger: ['blur', 'change']
       },
       date: {
         required: true,

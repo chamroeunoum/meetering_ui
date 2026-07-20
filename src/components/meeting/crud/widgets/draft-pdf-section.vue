@@ -462,7 +462,9 @@
 
 <script>
 import { ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount, h } from 'vue'
+import { useStore } from 'vuex'
 import { useMessage } from 'naive-ui'
+import { getUser } from '@plugins/authentication'
 import VuePdfEmbed from 'vue-pdf-embed'
 import 'vue-pdf-embed/dist/styles/textLayer.css'
 
@@ -540,6 +542,15 @@ export default {
   },
   setup(props) {
     const message = useMessage()
+    const store = useStore()
+    // In-memory only (see store/modules/meeting/draft-workspace.js) — survives
+    // switching tabs/navigating within the session, resets on a full reload.
+    const workspaceKey = computed(() => String(props.meetingId || ''))
+    const currentUserName = computed(() => {
+      const u = getUser()
+      const name = u ? `${u.lastname || ''} ${u.firstname || ''}`.trim() : ''
+      return name || 'អ្នកប្រើប្រាស់'
+    })
     const displayTitle = ref(props.title || 'សេចក្តីព្រាង')
     const localPdfUrl = ref('')
     const localDocxUrl = ref('')
@@ -579,8 +590,8 @@ export default {
     const currentPage = ref(1)
     const totalPages = ref(0)
     const selectedCommentId = ref(null)
-    const comments = ref([])
-    const notes = ref([])
+    const comments = computed(() => store.getters['meetingDraftWorkspace/workspace'](workspaceKey.value).comments)
+    const notes = computed(() => store.getters['meetingDraftWorkspace/workspace'](workspaceKey.value).notes)
     const versions = ref([])
     const selectedVersionId = ref(null)
     const pdfWidth = ref(0)
@@ -926,12 +937,12 @@ export default {
         page_number: quote ? quote.page_number : currentPage.value,
         selected_text: quote ? quote.text : '',
         comment: text,
-        creator: 'អ្នកប្រើប្រាស់បច្ចុប្បន្ន',
+        creator: currentUserName.value,
         created_at: nowStamp(),
         rects: quote ? [...quote.rects] : [],
         replies: []
       }
-      comments.value.unshift(item)
+      store.commit('meetingDraftWorkspace/addComment', { key: workspaceKey.value, comment: item })
       selectedCommentId.value = item.id
       commentDraftText.value = ''
       pendingQuote.value = null
@@ -945,7 +956,7 @@ export default {
     }
 
     function removeComment(id) {
-      comments.value = comments.value.filter(x => x.id !== id)
+      store.commit('meetingDraftWorkspace/removeComment', { key: workspaceKey.value, id })
       if (selectedCommentId.value === id) selectedCommentId.value = null
       if (openThreadId.value === id) openThreadId.value = null
       message.success('បានលុបមតិ')
@@ -970,11 +981,10 @@ export default {
       }
       const text = replyDraftText.value.trim()
       if (!text) return
-      c.replies.push({
-        id: Date.now(),
-        text,
-        creator: 'អ្នកប្រើប្រាស់បច្ចុប្បន្ន',
-        created_at: nowStamp()
+      store.commit('meetingDraftWorkspace/addReply', {
+        key: workspaceKey.value,
+        commentId: c.id,
+        reply: { id: Date.now(), text, creator: currentUserName.value, created_at: nowStamp() }
       })
       replyDraftText.value = ''
       // Composer stays open in the thread panel so the user can keep replying.
@@ -994,17 +1004,15 @@ export default {
       }
       const text = noteDraftText.value.trim()
       if (!text) return
-      notes.value.unshift({
-        id: Date.now(),
-        note: text,
-        creator: 'អ្នកប្រើប្រាស់បច្ចុប្បន្ន',
-        created_at: nowStamp()
+      store.commit('meetingDraftWorkspace/addNote', {
+        key: workspaceKey.value,
+        note: { id: Date.now(), note: text, creator: currentUserName.value, created_at: nowStamp() }
       })
       noteDraftText.value = ''
       message.success('បានរក្សាទុកកំណត់ចំណាំ')
     }
     function deleteNote(id) {
-      notes.value = notes.value.filter(n => n.id !== id)
+      store.commit('meetingDraftWorkspace/removeNote', { key: workspaceKey.value, id })
     }
 
     function selectVersion(v) {
@@ -1044,23 +1052,8 @@ export default {
     })
 
     onMounted(() => {
-      comments.value = [
-        {
-          id: 1,
-          page_number: 1,
-          selected_text: 'Trace-based Just-in-Time Compilation',
-          comment: 'គួរពិនិត្យឃ្លានេះឱ្យបានច្បាស់ជាងនេះ។',
-          creator: 'H.E. សុខ ហេង',
-          created_at: '2026-07-05 09:45',
-          rects: [{ x: 12, y: 18, w: 55, h: 2.2 }],
-          replies: [
-            { id: 101, text: 'យល់ព្រម នឹងកែសម្រួលនៅកំណែបន្ទាប់។', creator: 'អ្នកស្រី ចន្ថា សុគន្ធ', created_at: '2026-07-05 10:12' }
-          ]
-        }
-      ]
-      notes.value = [
-        { id: 1, note: 'សេចក្តីព្រាងនេះគ្របដណ្តប់លើវិស័យទូរគមនាគមន៍ទាំងមូល។', creator: 'H.E. សុខ ហេង', created_at: '2026-07-05' }
-      ]
+      // comments/notes come from the in-memory draft-workspace store (keyed by
+      // meetingId) — nothing to seed here, an unseen meeting just starts empty.
       versions.value = getMockVersions(props.version)
       selectedVersionId.value = versions.value[0]?.id ?? null
       document.addEventListener('keydown', onKeydown)

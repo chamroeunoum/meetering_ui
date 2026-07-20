@@ -94,6 +94,9 @@ const actions = {
   async read ({ state, commit, rootState },params) {
     return await crud.read(state.server+"/"+state.model.module+"/"+params.id+"/read")
   },
+  async history ({ state, commit, rootState },params) {
+    return await crud.read(state.server+"/"+state.model.module+"/"+params.id+"/history")
+  },
   async create ({ state, commit, rootState },params) {
     return await crud.create(state.server+"/"+state.model.module+'/create',params)
   },
@@ -115,17 +118,11 @@ const actions = {
   async statusNew({state, commit, rootState}, params){
     return await crud.update(state.server+"/"+state.model.module+"/"+params.id+"/status/new",params)
   },
-  async statusChange({state, commit, rootState}, params){
-    return await crud.update(state.server+"/"+state.model.module+"/"+params.id+"/status/change",params)
-  },
   async statusDelay({state, commit, rootState}, params){
     return await crud.update(state.server+"/"+state.model.module+"/"+params.id+"/status/delay",params)
   },
   async statusCancel({state, commit, rootState}, params){
     return await crud.update(state.server+"/"+state.model.module+"/"+params.id+"/status/cancel",params)
-  },
-  async setStatusTime({state, commit, rootState}, params){
-    return await crud.update(state.server+"/"+state.model.module+"/"+params.id+"/status/time",params)
   },
   async uploadPicture({ state, commit, rootState },formData) {
     return await crud.upload(state.server+"/"+state.model.module+"/upload/picture",formData)
