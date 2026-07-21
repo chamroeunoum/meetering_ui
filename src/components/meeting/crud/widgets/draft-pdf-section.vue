@@ -232,10 +232,9 @@
                 />
                 <template v-for="c in pageComments" :key="'hl-' + c.id">
                   <div
-                    v-for="(r, ri) in (c.rects || [])"
+                    v-for="(r, ri) in (selectedCommentId === c.id ? (c.rects || []) : [])"
                     :key="c.id + '-' + ri"
-                    class="highlight-box"
-                    :class="selectedCommentId === c.id ? 'highlight-active' : 'highlight-default'"
+                    class="highlight-box highlight-active"
                     :style="{ left: r.x + '%', top: r.y + '%', width: r.w + '%', height: r.h + '%' }"
                   />
                 </template>
@@ -904,7 +903,12 @@ export default {
     function onTextSelect() {
       if (fileTab.value !== 'pdf') return
       const sel = window.getSelection()
-      if (!sel || sel.isCollapsed || !sel.rangeCount) return
+      if (!sel || sel.isCollapsed || !sel.rangeCount) {
+        // A plain click on the PDF (not dragging a new selection) clears
+        // whichever comment was active, so its highlight disappears too.
+        selectedCommentId.value = null
+        return
+      }
       const wrap = pageWrap.value
       if (!wrap) return
       const anchor = sel.anchorNode
@@ -961,6 +965,18 @@ export default {
       submitComment()
     }
 
+    // The backend stores one box per annotation, not one per selected line, so
+    // a multi-line selection is saved as the smallest box that fully covers
+    // every line's rect — otherwise only the first line would survive a reload.
+    function boundingRectOf(rects) {
+      if (!rects || !rects.length) return null
+      const minX = Math.min(...rects.map(r => r.x))
+      const minY = Math.min(...rects.map(r => r.y))
+      const maxRight = Math.max(...rects.map(r => r.x + r.w))
+      const maxBottom = Math.max(...rects.map(r => r.y + r.h))
+      return { x: minX, y: minY, w: maxRight - minX, h: maxBottom - minY }
+    }
+
     async function submitComment() {
       if (!effectiveEditable.value) {
         message.warning('មិនអាចបន្ថែមមតិបានទេនៅពេលនេះ')
@@ -969,15 +985,15 @@ export default {
       const text = commentDraftText.value.trim()
       if (!text || !props.legalDraftId) return
       const quote = pendingQuote.value
-      const firstRect = quote?.rects?.[0]
+      const boundingRect = boundingRectOf(quote?.rects)
       try {
         const annRes = await store.dispatch('legalDraft/createAnnotation', {
           legal_draft_id: props.legalDraftId,
           page_number: quote ? quote.page_number : currentPage.value,
-          x: firstRect?.x || 0,
-          y: firstRect?.y || 0,
-          width: firstRect?.w || 0,
-          height: firstRect?.h || 0,
+          x: boundingRect?.x || 0,
+          y: boundingRect?.y || 0,
+          width: boundingRect?.w || 0,
+          height: boundingRect?.h || 0,
           selected_text: quote ? quote.text : '',
           note: text
         })
@@ -1214,7 +1230,6 @@ export default {
 .highlight-layer { pointer-events: none; position: absolute; inset: 0; z-index: 1; }
 .highlight-box { position: absolute; border-radius: 2px; }
 .highlight-pending { background-color: rgba(59, 130, 246, 0.35); box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.7) inset; }
-.highlight-default { background-color: rgba(250, 204, 21, 0.45); }
 .highlight-active { background-color: rgba(245, 158, 11, 0.5); box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.8) inset; }
 
 /* ─── Selection tooltip (intentionally theme-independent dark pill) ── */
