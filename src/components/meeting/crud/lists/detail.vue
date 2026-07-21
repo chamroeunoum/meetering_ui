@@ -701,6 +701,7 @@
                     :status="legalDraft.status"
                     :regulator="legalDraft.regulator || ''"
                     :meeting-id="record.id"
+                    :legal-draft-id="legalDraft.id"
                     :start-with-sidebar="true"
                   />
                   <div class="mt-3 flex justify-end">

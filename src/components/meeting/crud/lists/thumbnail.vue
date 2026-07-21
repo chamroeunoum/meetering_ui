@@ -1168,8 +1168,9 @@ export default {
         store.getters[props.model.name + "/columns"].all,
       );
 
-      // Default filter: show only New (status=1) meetings
-      selectedStatuses.value = [1];
+      // Show meetings of all statuses by default; the status filter above
+      // still lets the user narrow it down manually.
+      selectedStatuses.value = [];
 
       getRecords();
       getTypes();
