@@ -10,7 +10,11 @@
     </div>
 
     <!-- Timeline -->
-    <div v-if="timeline.length===0" class="text-center  py-12 bg-white rounded-lg border border-dashed border-gray-300">
+    <div v-if="loading" class="text-center py-12 bg-white rounded-lg border border-dashed border-gray-300">
+      <svg class="animate-spin w-8 mx-auto text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M304 48c0 26.51-21.49 48-48 48s-48-21.49-48-48s21.49-48 48-48s48 21.49 48 48zm-48 368c-26.51 0-48 21.49-48 48s21.49 48 48 48s48-21.49 48-48s-21.49-48-48-48zm208-208c-26.51 0-48 21.49-48 48s21.49 48 48 48s48-21.49 48-48s-21.49-48-48-48zM96 256c0-26.51-21.49-48-48-48S0 229.49 0 256s21.49 48 48 48s48-21.49 48-48zm12.922 99.078c-26.51 0-48 21.49-48 48s21.49 48 48 48s48-21.49 48-48c0-26.509-21.491-48-48-48zm294.156 0c-26.51 0-48 21.49-48 48s21.49 48 48 48s48-21.49 48-48c0-26.509-21.49-48-48-48zM108.922 60.922c-26.51 0-48 21.49-48 48s21.49 48 48 48s48-21.49 48-48s-21.491-48-48-48z" fill="currentColor"></path></svg>
+      <div class="mt-3">កំពុងអាន...</div>
+    </div>
+    <div v-else-if="timeline.length===0" class="text-center  py-12 bg-white rounded-lg border border-dashed border-gray-300">
       <svg class="w-16 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM11.75 6a.75.75 0 0 1 .75.75V12h3.75a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75V6.75a.75.75 0 0 1 .75-.75z" fill="currentColor"></path></g></svg>
       <div>មិនទាន់មានប្រវត្តិកំណែ</div>
     </div>
@@ -65,7 +69,7 @@
 
             <!-- Link to view this version's draft -->
             <div class="mt-3 text-right">
-              <router-link :to="{name:'DraftViewer',params:{meeting_id:entry.meeting_id,draft_id:entry.meeting_id}}" class="text-xs font-bold">
+              <router-link :to="{name:'DraftViewer',params:{id:entry.meeting_id,draft_id:entry.meeting_id}}" class="text-xs font-bold">
                 បើកមើលសេចក្តីព្រាង →
               </router-link>
             </div>
@@ -79,73 +83,57 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useStore } from 'vuex'
 
-function getMockTimeline() {
-  return [
-    {
-      meeting_id: 1,
-      meeting_date: '2026-07-15',
-      version_number: 4,
-      status: 'progressing',
-      note: 'កែសម្រួលតាមមតិយោបល់ពីក្រសួងសេដ្ឋកិច្ច — ត្រៀមដាក់អនុម័តក្នុងកិច្ចប្រជុំនេះ',
-      changes: [
-        'បន្ថែមនិយមន័យ ISP និងប្រតិបត្តិករទូរគមនាគមន៍',
-        'កែសម្រួលតារាងទោសប្បញ្ញត្តិ',
-        'ពន្យារពេលអនុវត្តពី ៦ ខែ ទៅ ១២ ខែ'
-      ],
-      regulators: ['ប្រកាសលេខ ១២៣ ស្តីពីទូរគមនាគមន៍', 'អនុក្រឹត្យស្តីពី ISP']
-    },
-    {
-      meeting_id: 2,
-      meeting_date: '2026-06-28',
-      version_number: 3,
-      status: 'final',
-      note: 'កែសម្រួលផ្នែកវិសាលភាព និងបន្ថែមទិន្នន័យថវិកា',
-      changes: [
-        'កំណត់វិសាលភាពឱ្យបានច្បាស់លាស់',
-        'បន្ថែមទិន្នន័យថវិកាសម្រាប់ឆមាសទី២'
-      ],
-      regulators: ['ប្រកាសលេខ ១២៣ ស្តីពីទូរគមនាគមន៍']
-    },
-    {
-      meeting_id: 3,
-      meeting_date: '2026-06-15',
-      version_number: 2,
-      status: 'final',
-      note: 'កំណែដំបូងដែលបានពិនិត្យដោយក្រុមការងារបច្ចេកទេស',
-      changes: [
-        'បញ្ចូលមតិពីក្រុមការងារបច្ចេកទេស',
-        'កែសម្រួលរចនាសម្ព័ន្ធឯកសារ'
-      ],
-      regulators: ['ប្រកាសលេខ ១២៣ ស្តីពីទូរគមនាគមន៍']
-    },
-    {
-      meeting_id: 4,
-      meeting_date: '2026-06-01',
-      version_number: 1,
-      status: 'final',
-      note: 'សេចក្តីព្រាងដំបូង — រៀបចំដោយក្រុមការងារគតិយុត្ត',
-      changes: [
-        'បង្កើតសេចក្តីព្រាងដំបូង'
-      ],
-      regulators: ['ប្រកាសលេខ ១២៣ ស្តីពីទូរគមនាគមន៍']
-    }
-  ]
-}
-
+// A meeting's legal draft "version" is its 1-based position in the chain of
+// meetings sharing that legal_draft_id (built via pid continuation) — see
+// MeetingController::history()/buildLegalDraftPayload(). There is no separate
+// per-version change-summary in the database yet, so entries only carry what
+// each meeting in the chain actually has (date/objective/status).
 export default {
   name:'DraftTimelinePage',
   setup(){
     const route=useRoute()
+    const store=useStore()
     const timeline=ref([])
-    const meetingId=computed(()=>route.params.meeting_id||0)
-    const draftTitle='សេចក្តីព្រាងគោលនយោបាយទូរគមនាគមន៍'
+    const loading=ref(true)
+    const meetingId=computed(()=>route.params.id||0)
+    const draftTitle=ref('សេចក្តីព្រាង')
+
+    function statusLabel(status){
+      return Number(status)===32 ? 'final' : 'progressing'
+    }
+
+    async function loadTimeline(){
+      loading.value=true
+      try{
+        const res=await store.dispatch('meeting/history',{id:meetingId.value})
+        const draft=res.data?.ok?res.data.record:null
+        draftTitle.value=draft?.objective||draft?.title||'សេចក្តីព្រាង'
+        const meetings=Array.isArray(draft?.meetings)?draft.meetings:[]
+        // Backend returns oldest→newest; show newest first (index 0 = current).
+        timeline.value=meetings.slice().reverse().map((m,idx)=>({
+          meeting_id:m.id,
+          meeting_date:m.date,
+          version_number:meetings.length-idx,
+          status:statusLabel(m.status),
+          note:m.objective||'',
+          changes:[],
+          regulators:[]
+        }))
+      }catch(e){
+        console.error(e)
+        timeline.value=[]
+      }finally{
+        loading.value=false
+      }
+    }
 
     onMounted(()=>{
-      timeline.value=getMockTimeline()
+      loadTimeline()
     })
 
-    return {timeline,meetingId,draftTitle}
+    return {timeline,meetingId,draftTitle,loading}
   }
 }
 </script>

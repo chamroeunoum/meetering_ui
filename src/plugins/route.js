@@ -91,6 +91,9 @@ import MeetingNotesComponent from '../components/meeting/crud/lists/notes.vue'
 import PeopleComponent from '../components/people/index.vue'
 import PeopleListComponent from '../components/people/list.vue'
 
+// Invitation management
+import InvitationListComponent from '../components/invitation/list.vue'
+
 // Error page
 import Page404 from '../components/errors/404.vue'
 import AuthenticatedLayout from '../layouts/authenticated.vue'
@@ -311,6 +314,14 @@ function getAuthenticatedRoutes() {
               component: PeopleListComponent,
             },
           ],
+        },
+
+        // ── Invitations ────────────────────────────────────────────────
+        {
+          name: 'Invitations',
+          path: 'invitations',
+          component: InvitationListComponent,
+          meta: { transition: 'slide-right', requiresAuth: true },
         },
 
         // ── User Profile ───────────────────────────────────────────────

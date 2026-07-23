@@ -30,6 +30,7 @@
         <div class="header-actions">
           <n-tag v-if="pdfSource" size="small" type="error" round>PDF</n-tag>
           <n-button size="small" @click="downloadFile">ទាញយក</n-button>
+          <n-button v-if="pdfSource && canUpload" size="small" @click="openUploadDocumentModal">ផ្ទុកជំនួសឯកសារ</n-button>
           <n-badge :value="comments.length" :max="99" :show="comments.length > 0" :offset="[-4, 4]">
             <n-button size="small" :type="showComments ? 'primary' : 'default'" @click="toggleComments">មើលមតិ PDF</n-button>
           </n-badge>
@@ -134,7 +135,7 @@
       <template #footer>
         <div class="modal-actions">
           <n-button @click="showUploadDocumentModal = false">បោះបង់</n-button>
-          <n-button type="primary" :disabled="!canConfirmUpload" @click="confirmUploadedDocument">
+          <n-button type="primary" :loading="uploadingDocument" :disabled="!canConfirmUpload" @click="confirmUploadedDocument">
             បញ្ជាក់
           </n-button>
         </div>
@@ -194,7 +195,7 @@
           <div v-if="!pdfSource" class="pdf-empty-wrap">
             <n-empty description="មិនទាន់មានឯកសារសេចក្តីព្រាង">
               <template #extra>
-                <div class="empty-document-actions">
+                <div v-if="canUpload" class="empty-document-actions">
                   <n-button type="info" secondary @click="openVersionDocumentModal">
                     យកឯកសារពីកំណែកិច្ចប្រជុំ
                   </n-button>
@@ -202,8 +203,11 @@
                     ផ្ទុកឯកសារថ្មី
                   </n-button>
                 </div>
-                <div class="empty-document-hint">
+                <div v-if="canUpload" class="empty-document-hint">
                   ឯកសារ PDF នឹងបង្ហាញនៅទីនេះ ហើយ DOCX នឹងរក្សាទុកជាមួយឯកសារ។
+                </div>
+                <div v-else class="empty-document-hint">
+                  មិនអាចផ្ទុកឯកសារបានទេ — កិច្ចប្រជុំនេះបានផ្សាយ ឬបានបញ្ចប់ហើយ។
                 </div>
               </template>
             </n-empty>
@@ -232,10 +236,9 @@
                 />
                 <template v-for="c in pageComments" :key="'hl-' + c.id">
                   <div
-                    v-for="(r, ri) in (c.rects || [])"
+                    v-for="(r, ri) in (selectedCommentId === c.id ? (c.rects || []) : [])"
                     :key="c.id + '-' + ri"
-                    class="highlight-box"
-                    :class="selectedCommentId === c.id ? 'highlight-active' : 'highlight-default'"
+                    class="highlight-box highlight-active"
                     :style="{ left: r.x + '%', top: r.y + '%', width: r.w + '%', height: r.h + '%' }"
                   />
                 </template>
@@ -415,44 +418,6 @@
               </n-timeline>
             </n-scrollbar>
           </n-tab-pane>
-
-          <!-- Notes -->
-          <n-tab-pane name="notes" :tab="`កំណត់ (${notes.length})`">
-            <n-scrollbar class="pane-scroll">
-              <n-empty v-if="notes.length === 0" class="pane-empty" description="មិនទាន់មានកំណត់ចំណាំ" />
-              <div v-for="n in notes" :key="n.id" class="list-item list-item-static">
-                <n-avatar round size="small" class="item-avatar">{{ (n.creator || '?').charAt(0) }}</n-avatar>
-                <div class="item-body">
-                  <p class="item-text text-secondary">{{ n.note }}</p>
-                  <div class="item-foot">
-                    <span class="text-muted">{{ n.creator }} · {{ n.created_at }}</span>
-                    <n-button v-if="effectiveEditable" text type="error" size="tiny" @click="deleteNote(n.id)">លុប</n-button>
-                  </div>
-                </div>
-              </div>
-            </n-scrollbar>
-
-            <div class="composer border-default">
-              <div class="composer-row">
-                <n-input
-                  v-model:value="noteDraftText"
-                  type="textarea"
-                  :autosize="{ minRows: 1, maxRows: 4 }"
-                  placeholder="សរសេរកំណត់ចំណាំ... (Enter ដើម្បីផ្ញើ)"
-                  :disabled="!effectiveEditable"
-                  @keydown.enter="handleNoteEnter"
-                />
-                <n-button
-                  circle
-                  type="primary"
-                  :disabled="!effectiveEditable || !noteDraftText.trim()"
-                  @click="submitNote"
-                >
-                  <template #icon><SendIcon /></template>
-                </n-button>
-              </div>
-            </div>
-          </n-tab-pane>
         </n-tabs>
       </aside>
       </div>
@@ -462,7 +427,9 @@
 
 <script>
 import { ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount, h } from 'vue'
+import { useStore } from 'vuex'
 import { useMessage } from 'naive-ui'
+import { getUser } from '@plugins/authentication'
 import VuePdfEmbed from 'vue-pdf-embed'
 import 'vue-pdf-embed/dist/styles/textLayer.css'
 
@@ -536,10 +503,20 @@ export default {
     status: { type: String, default: '' },
     regulator: { type: String, default: '' },
     meetingId: { type: [String, Number], default: '' },
+    legalDraftId: { type: [String, Number], default: '' },
+    canUpload: { type: Boolean, default: true },
     startWithSidebar: { type: Boolean, default: false }
   },
   setup(props) {
     const message = useMessage()
+    const store = useStore()
+    // In-memory only (see store/modules/meeting/draft-workspace.js) — survives
+    // switching tabs/navigating within the session, resets on a full reload.
+    const currentUserName = computed(() => {
+      const u = getUser()
+      const name = u ? `${u.lastname || ''} ${u.firstname || ''}`.trim() : ''
+      return name || 'អ្នកប្រើប្រាស់'
+    })
     const displayTitle = ref(props.title || 'សេចក្តីព្រាង')
     const localPdfUrl = ref('')
     const localDocxUrl = ref('')
@@ -579,13 +556,62 @@ export default {
     const currentPage = ref(1)
     const totalPages = ref(0)
     const selectedCommentId = ref(null)
+    // Comments (annotation + pole + pole comments) are persisted for real —
+    // loaded from/saved to the backend.
     const comments = ref([])
-    const notes = ref([])
+
+    function mapPoleToComment(pole, annotationsById) {
+      const ann = annotationsById?.get(pole.annotation_id)
+      return {
+        id: pole.id,
+        annotationId: pole.annotation_id,
+        page_number: pole.page_number || 1,
+        selected_text: pole.annotation_text || '',
+        comment: pole.description || '',
+        creator: pole.creator?.name || 'អ្នកប្រើប្រាស់',
+        created_at: pole.created_at,
+        // The schema stores one box per annotation (not per selection line),
+        // so a multi-line highlight collapses back to a single rect on reload.
+        rects: ann ? [{ x: ann.x, y: ann.y, w: ann.width, h: ann.height }] : [],
+        replies: (pole.comments || []).map((c) => ({
+          id: c.id,
+          text: c.comment,
+          creator: c.creator?.name || 'អ្នកប្រើប្រាស់',
+          created_at: c.created_at
+        }))
+      }
+    }
+
+    async function loadDraftSocial() {
+      if (!props.legalDraftId) { comments.value = []; return }
+      try {
+        const res = await store.dispatch('legalDraft/read', { id: props.legalDraftId })
+        const record = res.data?.record
+        if (!record) return
+        const annotationsById = new Map((record.annotations || []).map((a) => [a.id, a]))
+        comments.value = (record.poles || []).map((p) => mapPoleToComment(p, annotationsById))
+
+        // The stored files live outside the public disk, so fetch their real
+        // content through the authenticated endpoint instead of trusting
+        // record.pdf_url/docx_url (which point at a non-public path).
+        if (record.pdf_file) {
+          store.dispatch('legalDraft/readFile', { id: props.legalDraftId, file_type: 'pdf' })
+            .then((r) => { if (r.data?.ok) localPdfUrl.value = r.data.data })
+            .catch(() => {})
+        }
+        if (record.docx_file) {
+          store.dispatch('legalDraft/readFile', { id: props.legalDraftId, file_type: 'docx' })
+            .then((r) => { if (r.data?.ok) localDocxUrl.value = r.data.data })
+            .catch(() => {})
+        }
+      } catch (e) {
+        comments.value = []
+      }
+    }
     const versions = ref([])
     const selectedVersionId = ref(null)
     const pdfWidth = ref(0)
     const commentDraftText = ref('')
-    const noteDraftText = ref('')
     const pendingQuote = ref(null)
     const openThreadId = ref(null)
     const replyDraftText = ref('')
@@ -805,26 +831,57 @@ export default {
       uploadedDocxObjectUrl = ''
     }
 
-    function confirmUploadedDocument() {
+    const uploadingDocument = ref(false)
+    async function confirmUploadedDocument() {
       if (!canConfirmUpload.value) return
-      revokeUploadedObjectUrls()
-      uploadedPdfObjectUrl = URL.createObjectURL(selectedPdfFile.value)
-      uploadedDocxObjectUrl = URL.createObjectURL(selectedDocxFile.value)
-      displayTitle.value = uploadDocumentForm.name.trim()
-      localPdfUrl.value = uploadedPdfObjectUrl
-      localDocxUrl.value = uploadedDocxObjectUrl
-      const baseName = documentBaseName()
-      Object.assign(temporaryDocumentStore, {
-        name: displayTitle.value,
-        pdf_name: selectedPdfFile.value.name || `${baseName}.pdf`,
-        pdf_url: uploadedPdfObjectUrl,
-        docx_name: selectedDocxFile.value.name || `${baseName}.docx`,
-        docx_url: uploadedDocxObjectUrl
-      })
-      fileTab.value = 'pdf'
-      currentPage.value = 1
-      showUploadDocumentModal.value = false
-      message.success('បានផ្ទុកឯកសារ PDF និង DOCX ដោយជោគជ័យ')
+      if (!props.legalDraftId) {
+        message.error('មិនអាចផ្ទុកឯកសារបានទេ — មិនទាន់មានសេចក្តីព្រាងនេះឡើយ។')
+        return
+      }
+      uploadingDocument.value = true
+      try {
+        const pdfForm = new FormData()
+        pdfForm.append('id', props.legalDraftId)
+        pdfForm.append('file_type', 'pdf')
+        pdfForm.append('file', selectedPdfFile.value)
+        const pdfRes = await store.dispatch('legalDraft/uploadFile', pdfForm)
+
+        const docxForm = new FormData()
+        docxForm.append('id', props.legalDraftId)
+        docxForm.append('file_type', 'docx')
+        docxForm.append('file', selectedDocxFile.value)
+        const docxRes = await store.dispatch('legalDraft/uploadFile', docxForm)
+
+        if (!pdfRes.data?.ok || !docxRes.data?.ok) throw new Error('upload failed')
+
+        // The backend has now safely stored both files (verified above). For
+        // the immediate on-screen preview, use local blob URLs from the same
+        // files we just uploaded — the backend's own file_url isn't publicly
+        // reachable; reopening this draft later re-fetches the real content
+        // through legalDraft/readFile (see loadDraftSocial).
+        revokeUploadedObjectUrls()
+        uploadedPdfObjectUrl = URL.createObjectURL(selectedPdfFile.value)
+        uploadedDocxObjectUrl = URL.createObjectURL(selectedDocxFile.value)
+        displayTitle.value = uploadDocumentForm.name.trim()
+        localPdfUrl.value = uploadedPdfObjectUrl
+        localDocxUrl.value = uploadedDocxObjectUrl
+        const baseName = documentBaseName()
+        Object.assign(temporaryDocumentStore, {
+          name: displayTitle.value,
+          pdf_name: selectedPdfFile.value.name || `${baseName}.pdf`,
+          pdf_url: uploadedPdfObjectUrl,
+          docx_name: selectedDocxFile.value.name || `${baseName}.docx`,
+          docx_url: uploadedDocxObjectUrl
+        })
+        fileTab.value = 'pdf'
+        currentPage.value = 1
+        showUploadDocumentModal.value = false
+        message.success('បានផ្ទុកឯកសារ PDF និង DOCX ដោយជោគជ័យ')
+      } catch (e) {
+        message.error('មិនអាចផ្ទុកឯកសារបានទេ')
+      } finally {
+        uploadingDocument.value = false
+      }
     }
 
     function onKeydown(e) {
@@ -851,7 +908,12 @@ export default {
     function onTextSelect() {
       if (fileTab.value !== 'pdf') return
       const sel = window.getSelection()
-      if (!sel || sel.isCollapsed || !sel.rangeCount) return
+      if (!sel || sel.isCollapsed || !sel.rangeCount) {
+        // A plain click on the PDF (not dragging a new selection) clears
+        // whichever comment was active, so its highlight disappears too.
+        selectedCommentId.value = null
+        return
+      }
       const wrap = pageWrap.value
       if (!wrap) return
       const anchor = sel.anchorNode
@@ -907,35 +969,70 @@ export default {
       e.preventDefault()
       submitComment()
     }
-    function handleNoteEnter(e) {
-      if (e.shiftKey) return
-      e.preventDefault()
-      submitNote()
+
+    // The backend stores one box per annotation, not one per selected line, so
+    // a multi-line selection is saved as the smallest box that fully covers
+    // every line's rect — otherwise only the first line would survive a reload.
+    function boundingRectOf(rects) {
+      if (!rects || !rects.length) return null
+      const minX = Math.min(...rects.map(r => r.x))
+      const minY = Math.min(...rects.map(r => r.y))
+      const maxRight = Math.max(...rects.map(r => r.x + r.w))
+      const maxBottom = Math.max(...rects.map(r => r.y + r.h))
+      return { x: minX, y: minY, w: maxRight - minX, h: maxBottom - minY }
     }
 
-    function submitComment() {
+    async function submitComment() {
       if (!effectiveEditable.value) {
         message.warning('មិនអាចបន្ថែមមតិបានទេនៅពេលនេះ')
         return
       }
       const text = commentDraftText.value.trim()
-      if (!text) return
+      if (!text || !props.legalDraftId) return
       const quote = pendingQuote.value
-      const item = {
-        id: Date.now(),
-        page_number: quote ? quote.page_number : currentPage.value,
-        selected_text: quote ? quote.text : '',
-        comment: text,
-        creator: 'អ្នកប្រើប្រាស់បច្ចុប្បន្ន',
-        created_at: nowStamp(),
-        rects: quote ? [...quote.rects] : [],
-        replies: []
+      const boundingRect = boundingRectOf(quote?.rects)
+      try {
+        const annRes = await store.dispatch('legalDraft/createAnnotation', {
+          legal_draft_id: props.legalDraftId,
+          page_number: quote ? quote.page_number : currentPage.value,
+          x: boundingRect?.x || 0,
+          y: boundingRect?.y || 0,
+          width: boundingRect?.w || 0,
+          height: boundingRect?.h || 0,
+          selected_text: quote ? quote.text : '',
+          note: text
+        })
+        const annotation = annRes.data?.record
+        if (!annotation) throw new Error('annotation failed')
+
+        const poleRes = await store.dispatch('legalDraft/createPole', {
+          legal_draft_id: props.legalDraftId,
+          annotation_id: annotation.id,
+          title: (quote ? quote.text : text).slice(0, 50),
+          description: text
+        })
+        const pole = poleRes.data?.record
+        if (!pole) throw new Error('pole failed')
+
+        const item = {
+          id: pole.id,
+          annotationId: annotation.id,
+          page_number: quote ? quote.page_number : currentPage.value,
+          selected_text: quote ? quote.text : '',
+          comment: text,
+          creator: currentUserName.value,
+          created_at: nowStamp(),
+          rects: quote ? [...quote.rects] : [],
+          replies: []
+        }
+        comments.value.unshift(item)
+        selectedCommentId.value = item.id
+        commentDraftText.value = ''
+        pendingQuote.value = null
+        message.success('បានរក្សាទុកមតិ')
+      } catch (e) {
+        message.error('មិនអាចរក្សាទុកមតិបានទេ')
       }
-      comments.value.unshift(item)
-      selectedCommentId.value = item.id
-      commentDraftText.value = ''
-      pendingQuote.value = null
-      message.success('បានរក្សាទុកមតិ')
     }
 
     function focusComment(c) {
@@ -944,11 +1041,21 @@ export default {
       if (c.page_number) currentPage.value = c.page_number
     }
 
-    function removeComment(id) {
-      comments.value = comments.value.filter(x => x.id !== id)
-      if (selectedCommentId.value === id) selectedCommentId.value = null
-      if (openThreadId.value === id) openThreadId.value = null
-      message.success('បានលុបមតិ')
+    async function removeComment(id) {
+      const target = comments.value.find((c) => c.id === id)
+      try {
+        if (target?.annotationId) {
+          await store.dispatch('legalDraft/deleteAnnotation', { id: target.annotationId })
+        } else {
+          await store.dispatch('legalDraft/deletePole', { id })
+        }
+        comments.value = comments.value.filter((c) => c.id !== id)
+        if (selectedCommentId.value === id) selectedCommentId.value = null
+        if (openThreadId.value === id) openThreadId.value = null
+        message.success('បានលុបមតិ')
+      } catch (e) {
+        message.error('មិនអាចលុបមតិបានទេ')
+      }
     }
 
     // Each comment opens its own dedicated thread panel — replies never show inline in the list.
@@ -963,48 +1070,34 @@ export default {
       replyDraftText.value = ''
     }
 
-    function submitReply(c) {
+    async function submitReply(c) {
       if (!effectiveEditable.value) {
         message.warning('មិនអាចឆ្លើយតបបានទេនៅពេលនេះ')
         return
       }
       const text = replyDraftText.value.trim()
       if (!text) return
-      c.replies.push({
-        id: Date.now(),
-        text,
-        creator: 'អ្នកប្រើប្រាស់បច្ចុប្បន្ន',
-        created_at: nowStamp()
-      })
-      replyDraftText.value = ''
-      // Composer stays open in the thread panel so the user can keep replying.
-      message.success('បានផ្ញើការឆ្លើយតប')
+      try {
+        const res = await store.dispatch('legalDraft/addPoleComment', { pole_id: c.id, comment: text })
+        const saved = res.data?.record
+        c.replies.push({
+          id: saved?.id || Date.now(),
+          text,
+          creator: currentUserName.value,
+          created_at: nowStamp()
+        })
+        replyDraftText.value = ''
+        // Composer stays open in the thread panel so the user can keep replying.
+        message.success('បានផ្ញើការឆ្លើយតប')
+      } catch (e) {
+        message.error('មិនអាចផ្ញើការឆ្លើយតបបានទេ')
+      }
     }
 
     function handleReplyEnter(e, c) {
       if (e.shiftKey) return
       e.preventDefault()
       submitReply(c)
-    }
-
-    function submitNote() {
-      if (!effectiveEditable.value) {
-        message.warning('មិនអាចបន្ថែមកំណត់ចំណាំបានទេនៅពេលនេះ')
-        return
-      }
-      const text = noteDraftText.value.trim()
-      if (!text) return
-      notes.value.unshift({
-        id: Date.now(),
-        note: text,
-        creator: 'អ្នកប្រើប្រាស់បច្ចុប្បន្ន',
-        created_at: nowStamp()
-      })
-      noteDraftText.value = ''
-      message.success('បានរក្សាទុកកំណត់ចំណាំ')
-    }
-    function deleteNote(id) {
-      notes.value = notes.value.filter(n => n.id !== id)
     }
 
     function selectVersion(v) {
@@ -1043,24 +1136,10 @@ export default {
       currentPage.value = 1
     })
 
+    watch(() => props.legalDraftId, () => { loadDraftSocial() })
+
     onMounted(() => {
-      comments.value = [
-        {
-          id: 1,
-          page_number: 1,
-          selected_text: 'Trace-based Just-in-Time Compilation',
-          comment: 'គួរពិនិត្យឃ្លានេះឱ្យបានច្បាស់ជាងនេះ។',
-          creator: 'H.E. សុខ ហេង',
-          created_at: '2026-07-05 09:45',
-          rects: [{ x: 12, y: 18, w: 55, h: 2.2 }],
-          replies: [
-            { id: 101, text: 'យល់ព្រម នឹងកែសម្រួលនៅកំណែបន្ទាប់។', creator: 'អ្នកស្រី ចន្ថា សុគន្ធ', created_at: '2026-07-05 10:12' }
-          ]
-        }
-      ]
-      notes.value = [
-        { id: 1, note: 'សេចក្តីព្រាងនេះគ្របដណ្តប់លើវិស័យទូរគមនាគមន៍ទាំងមូល។', creator: 'H.E. សុខ ហេង', created_at: '2026-07-05' }
-      ]
+      loadDraftSocial()
       versions.value = getMockVersions(props.version)
       selectedVersionId.value = versions.value[0]?.id ?? null
       document.addEventListener('keydown', onKeydown)
@@ -1087,19 +1166,19 @@ export default {
       versionDocumentForm, uploadDocumentForm, meetingVersionOptions,
       pdfFileList, docxFileList, uploadValidationMessage, canConfirmUpload,
       fileTab, showComments, sidebarTab, isFullscreen, currentPage, totalPages,
-      selectedCommentId, comments, notes, versions, selectedVersionId, activeVersion,
+      selectedCommentId, comments, versions, selectedVersionId, activeVersion,
       isLatestVersion, effectiveEditable, lockBanner,
       pdfWidth, pdfSource, pageComments, pendingHighlightRects,
       statusLabel, statusTagType, paneWrapperStyle, paneStyle,
-      addCommentTip, pendingQuote, commentDraftText, noteDraftText,
+      addCommentTip, pendingQuote, commentDraftText,
       openThreadId, openThread, replyDraftText,
       onPdfLoaded, onPdfRendered, onPdfError, toggleComments,
       enterFullscreen, exitFullscreen, downloadFile, onTextSelect,
       openVersionDocumentModal, confirmVersionDocument,
-      openUploadDocumentModal, onPdfFileListChange, onDocxFileListChange, confirmUploadedDocument,
+      openUploadDocumentModal, onPdfFileListChange, onDocxFileListChange, confirmUploadedDocument, uploadingDocument,
       dismissTip, startCommentFromSelection, clearPendingQuote,
-      handleCommentEnter, handleNoteEnter, submitComment, submitNote,
-      focusComment, removeComment, deleteNote, selectVersion, goToLatestVersion,
+      handleCommentEnter, submitComment,
+      focusComment, removeComment, selectVersion, goToLatestVersion,
       openCommentThread, closeThread, submitReply, handleReplyEnter
     }
   }
@@ -1156,7 +1235,6 @@ export default {
 .highlight-layer { pointer-events: none; position: absolute; inset: 0; z-index: 1; }
 .highlight-box { position: absolute; border-radius: 2px; }
 .highlight-pending { background-color: rgba(59, 130, 246, 0.35); box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.7) inset; }
-.highlight-default { background-color: rgba(250, 204, 21, 0.45); }
 .highlight-active { background-color: rgba(245, 158, 11, 0.5); box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.8) inset; }
 
 /* ─── Selection tooltip (intentionally theme-independent dark pill) ── */

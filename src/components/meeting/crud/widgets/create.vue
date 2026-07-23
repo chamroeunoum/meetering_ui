@@ -9,7 +9,7 @@
     >
       <n-card
         class="w-[92vw] max-w-3xl font-ktr"
-        title="បន្ថែមកិច្ចប្រជុំ"
+        :title="isEditMode ? 'កែប្រែកិច្ចប្រជុំ' : 'បន្ថែមកិច្ចប្រជុំ'"
         :bordered="false"
         size="small"
         closable
@@ -21,7 +21,7 @@
             size="small"
             :loading="saving"
             :disabled="saving"
-            @click="create"
+            @click="save"
           >
             រក្សាទុក
           </n-button>
@@ -47,7 +47,7 @@
             </n-form-item>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-              <n-form-item label="ប្រភេទប្រជុំ" path="type_id">
+              <n-form-item label="ប្រភេទប្រជុំ" path="type_id" required>
                 <n-select
                   v-model:value="form.type_id"
                   filterable
@@ -144,16 +144,30 @@ import { useNotification } from 'naive-ui'
 import dateFormat from 'dateformat'
 import Crud from '@classes/Crud.js'
 
+// A meeting created with the default (untouched) date/time must never already
+// look "finished" the moment it's saved — the backend marks a meeting
+// finished purely by comparing its date/start/end against the current clock,
+// so a hardcoded default time (e.g. always 08:00-11:30) would make anything
+// created later in the day appear finished on its very first read.
+function roundUpToNextHalfHour(date) {
+  const d = new Date(date)
+  d.setSeconds(0, 0)
+  const remainder = d.getMinutes() % 30
+  if (remainder !== 0) d.setMinutes(d.getMinutes() + (30 - remainder))
+  return d
+}
+
 function defaultForm() {
-  const now = new Date()
+  const start = roundUpToNextHalfHour(new Date())
+  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000)
   return {
     objective: '',
     summary: '',
     route: '',
     contact_info: '',
-    date: dateFormat(now, 'yyyy-mm-dd'),
-    start: '08:00',
-    end: '11:30',
+    date: dateFormat(start, 'yyyy-mm-dd'),
+    start: dateFormat(start, 'HH:MM'),
+    end: dateFormat(end, 'HH:MM'),
     type_id: null,
     organizations: [],
     rooms: []
@@ -164,9 +178,32 @@ export default {
   name: 'MeetingCreateForm',
   props: {
     model: {
-      type: Object,
-      required: true,
-      default: () => ({ name: 'meeting', title: 'កិច្ចប្រជុំ' })
+      type: Object ,
+      required: true ,
+      default: () => {
+        return reactive({
+          name: 'Undefined' ,
+          title: 'No title'
+        })
+      },
+      // validator: (val) => {}
+    } , 
+    record: {
+      type: Object ,
+      required: false ,
+      default: () => {
+        return reactive({
+          id: 0 ,
+          objective: '' ,
+          contact_info: '' ,
+          route: '' ,
+          date: new Date() ,
+          start: null ,
+          summary: '' ,
+          end : null ,
+          type_id: null
+        })
+      }
     },
     show: { type: Boolean, default: false },
     onClose: { type: Function, default: null }
@@ -178,6 +215,9 @@ export default {
     const crud = ref(null)
     const saving = ref(false)
     const form = reactive(defaultForm())
+    const originalRoomIds = ref([])
+
+    const isEditMode = computed(() => parseInt(props.record?.id) > 0)
 
     const typeOptions = computed(() =>
       (store.getters['meetingType/records']?.all || []).map(o => ({
@@ -193,18 +233,24 @@ export default {
       }))
     )
 
-    const roomOptions = computed(() =>
-      (store.getters['meetingRoom/records']?.all || []).map(o => ({
-        label: o.name,
-        value: o.id
-      }))
-    )
+    const roomOptions = computed( () => {
+      const list = store.getters['meetingRoom/records'].all
+      return Array.isArray(list) ? list.map( ( r ) => {
+        return { label: r.name , value: r.id }
+      }) : []
+    })
 
     const rules = {
       objective: {
         required: true,
         message: 'សូមបំពេញកម្មវត្ថុ',
         trigger: ['blur', 'input']
+      },
+      type_id: {
+        required: true,
+        type: 'number',
+        message: 'សូមជ្រើសរើសប្រភេទប្រជុំ',
+        trigger: ['blur', 'change']
       },
       date: {
         required: true,
@@ -219,7 +265,12 @@ export default {
       end: {
         required: true,
         message: 'សូមជ្រើសរើសម៉ោងបញ្ចប់',
-        trigger: ['blur', 'change']
+        trigger: ['blur', 'change'],
+        validator(rule, value) {
+          if (!value || !form.start) return true
+          if (value <= form.start) return new Error('ម៉ោងបញ្ចប់ត្រូវតែក្រោយម៉ោងចាប់ផ្ដើម')
+          return true
+        }
       }
     }
 
@@ -228,7 +279,6 @@ export default {
     }
 
     function initial() {
-      resetForm()
       store.commit(props.model.name + '/setColumns', ['id', 'name'])
       store.commit(props.model.name + '/setModel', props.model)
       crud.value = new Crud()
@@ -238,6 +288,23 @@ export default {
         store.getters[props.model.name + '/columns'].all
       )
 
+      if (isEditMode.value) {
+        const r = props.record
+        form.objective = r.objective || ''
+        form.summary = r.summary || ''
+        form.route = r.route || ''
+        form.contact_info = r.contact_info || ''
+        form.date = r.date || ''
+        form.start = r.start || ''
+        form.end = r.end || ''
+        form.type_id = r.type_id || (r.type ? r.type.id : null)
+        form.organizations = Array.isArray(r.organizations) ? r.organizations.map(o => o.id) : []
+        form.rooms = Array.isArray(r.rooms) ? r.rooms.map(rm => rm.id) : []
+        originalRoomIds.value = [...form.rooms]
+      } else {
+        resetForm()
+      }
+
       // Ensure lookup lists are available
       const listOpts = { page: 1, perPage: 1000, search: '' }
       if (!typeOptions.value.length) store.dispatch('meetingType/list', listOpts).catch(() => {})
@@ -245,7 +312,24 @@ export default {
       if (!roomOptions.value.length) store.dispatch('meetingRoom/list', listOpts).catch(() => {})
     }
 
-    async function create() {
+    function syncRooms(meetingId) {
+      const newRoomIds = Array.isArray(form.rooms) ? form.rooms : []
+      const oldRoomIds = isEditMode.value ? originalRoomIds.value : []
+      const changedRoomIds = [
+        ...oldRoomIds.filter(id => !newRoomIds.includes(id)),
+        ...newRoomIds.filter(id => !oldRoomIds.includes(id))
+      ]
+      return Promise.all(
+        changedRoomIds.map(id =>
+          store.dispatch(props.model.name + '/toggleMeetingRoom', {
+            room: { id },
+            meeting: { id: meetingId }
+          })
+        )
+      )
+    }
+
+    async function save() {
       try {
         await formRef.value?.validate()
       } catch (e) {
@@ -270,30 +354,82 @@ export default {
         return
       }
 
-      const payload = {
-        objective: form.objective.trim(),
-        date: form.date,
-        start: form.start,
-        end: form.end,
-        type_id: form.type_id || 0,
-        contact_info: form.contact_info || '',
-        route: form.route || '',
-        summary: form.summary || '',
-        organizations: Array.isArray(form.organizations) ? form.organizations : [],
-        rooms: Array.isArray(form.rooms) ? form.rooms : []
+      saving.value = true
+
+      if (isEditMode.value) {
+        syncRooms(props.record.id)
+          .then(() => store.dispatch(props.model.name + '/update', {
+            id: props.record.id,
+            objective: form.objective,
+            date: form.date,
+            start: form.start,
+            end: form.end,
+            type_id: form.type_id,
+            contact_info: form.contact_info,
+            route: form.route,
+            summary: form.summary,
+            organizations: form.organizations
+          }))
+          .then(res => {
+            saving.value = false
+            if (res.data?.ok) {
+              notify.success({
+                title: 'រក្សាទុកព័ត៌មាន',
+                description: res.data?.message || 'បានកែប្រែកិច្ចប្រជុំដោយជោគជ័យ។',
+                duration: 3000
+              })
+              props.onClose?.(1)
+            } else {
+              notify.error({
+                title: 'រក្សាទុកព័ត៌មាន',
+                description: 'មានបញ្ហាក្នុងពេលរក្សាទុកកិច្ចប្រជុំ។',
+                duration: 3000
+              })
+            }
+          })
+          .catch(error => {
+            saving.value = false
+            console.error(error)
+            notify.error({
+              title: 'រក្សាទុកព័ត៌មាន',
+              description: 'មានបញ្ហាក្នុងពេលរក្សាទុកកិច្ចប្រជុំ។',
+              duration: 3000
+            })
+          })
+        return
       }
 
-      saving.value = true
       crud.value.create(
-        payload,
-        (res) => {
-          saving.value = false
-          if (res.status === 200) {
+        {
+          objective: form.objective ,
+          date: form.date  ,
+          start: form.start ,
+          end: form.end ,
+          type_id: form.type_id ,
+          contact_info : form.contact_info ,
+          route : form.route ,
+          summary : form.summary ,
+          organizations: form.organizations
+        },
+        ( res ) => {
+          switch( res.status ){
+            case 200 :
+            // ── Attach each selected room to the newly created meeting ──
+            const newMeetingId = res.data.record?.id
+            if ( Array.isArray(form.rooms) && newMeetingId ) {
+              form.rooms.forEach((roomId) => {
+                store.dispatch( props.model.name+'/toggleMeetingRoom', {
+                  room: { id: roomId },
+                  meeting: { id: newMeetingId }
+                })
+              })
+            }
             notify.success({
               title: 'រក្សាទុកព័ត៌មាន',
               description: res.data?.message || 'បានបង្កើតកិច្ចប្រជុំដោយជោគជ័យ។',
               duration: 3000
             })
+            saving.value = false
             resetForm()
             props.onClose?.(1)
           }
@@ -311,15 +447,22 @@ export default {
     }
 
     return {
-      formRef,
-      form,
-      rules,
-      saving,
-      typeOptions,
-      organizationOptions,
-      roomOptions,
-      initial,
-      create
+      /**
+       * Variables
+       */
+      formRef ,
+      form ,
+      saving ,
+      rules ,
+      typeOptions ,
+      organizationOptions ,
+      roomOptions ,
+      isEditMode ,
+      /**
+       * Functions
+       */
+      save ,
+      initial
     }
   }
 }

@@ -27,9 +27,18 @@
               <div v-if="record.meeting_code" class="mt-1"><code class="text-sm font-bold text-gray-500 font-mono bg-gray-100 px-2 py-0.5 rounded">{{ record.meeting_code }}</code></div>
             </div>
             <div class="flex-none flex items-center gap-2">
-              <n-tag size="small" :type="meetingStatusType" round>
-                {{ meetingStatusLabel }}
-              </n-tag>
+              <n-popselect
+                v-if="parseInt(record.active) > 0"
+                :value="Number(record.status) || 1"
+                :options="meetingStatusOptions"
+                size="small"
+                trigger="click"
+                @update:value="(val) => onSelectMeetingStatus(val, record)"
+              >
+                <n-tag size="small" :type="meetingStatusType" style="cursor:pointer" title="ចុចដើម្បីប្ដូរស្ថានភាព">
+                  {{ meetingStatusLabel }}
+                </n-tag>
+              </n-popselect>
               <n-button size="tiny" quaternary @click="showEditModal = true" class="!p-1">
                 <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </n-button>
@@ -39,7 +48,21 @@
                 </template>
                 <span class="text-xs">{{ parseInt(record.active) > 0 ? 'ឈប់ផ្សាយ' : 'ផ្សាយ' }}</span>
               </n-button>
-              <n-button size="tiny" type="success" secondary @click="openContinueMeetingModal">
+              <n-tooltip v-if="!canContinueMeeting" trigger="hover">
+                <template #trigger>
+                  <n-button size="tiny" type="success" secondary disabled>
+                    <template #icon>
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14"/>
+                        <path d="m13 6 6 6-6 6"/>
+                      </svg>
+                    </template>
+                    <span class="text-xs">បន្តកិច្ចប្រជុំទៅកំណែថ្មី</span>
+                  </n-button>
+                </template>
+                កិច្ចប្រជុំត្រូវស្ថិតក្នុងស្ថានភាព ពន្យាពេល ឬ ចប់ សិន ទើបអាចបន្តទៅកំណែថ្មីបាន
+              </n-tooltip>
+              <n-button v-else size="tiny" type="success" secondary @click="openContinueMeetingModal">
                 <template #icon>
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M5 12h14"/>
@@ -63,7 +86,16 @@
             <div class="flex items-start space-x-2"><svg class="w-5 h-5 text-blue-500 flex-none mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 13c0-.55-.45-1-1-1h-4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1l1.27.67c.33.18.73-.06.73-.44v-2.46c0-.38-.4-.62-.73-.44L18 14v-1zm-7.2-9.1l-6 4.5c-.5.38-.8.97-.8 1.6v9c0 1.1.9 2 2 2h13c.55 0 1-.45 1-1s-.45-1-1-1H6v-9l6-4.5l6 4.5v1h2v-1c0-.63-.3-1.22-.8-1.6l-6-4.5a2.01 2.01 0 0 0-2.4 0z" fill="currentColor"></path></svg><div><div class="text-xs ">បន្ទប់ប្រជុំ</div><div class="font-bold ">{{ record.rooms && record.rooms.length > 0 ? record.rooms.map(r => r.name).join(', ') : 'មិនបានកំណត់' }}</div></div></div>
             <div class="flex items-start space-x-2"><svg class="w-5 h-5 text-blue-500 flex-none mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4zm0 1.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 0 0 0-5zM2 19v-.5C2 14.693 5.907 13 12 13s10 1.693 10 5.5v.5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm1.5 0a.5.5 0 0 0 .5.5h16a.5.5 0 0 0 .5-.5v-.5c0-2.003-3.358-4-8.5-4s-8.5 1.997-8.5 4v.5z" fill="currentColor"></path></g></svg><div><div class="text-xs ">ក្រសួង ស្ថាប័ន</div><div class="font-bold ">{{ record.organizations && record.organizations.length > 0 ? record.organizations.map(o => o.name).join(', ') : 'មិនបានកំណត់' }}</div></div></div>
           </div>
-          <div v-if="record.route" class="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+          <div v-if="hasStatusReason" class="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
+            <div class="flex items-start space-x-2">
+              <svg class="w-5 h-5 flex-none mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 0 0 0-17zM11 7a1 1 0 1 1 2 0a1 1 0 0 1-2 0zm1 3.75a.75.75 0 0 1 1.5 0v5.5a.75.75 0 0 1-1.5 0v-5.5z" fill="currentColor"></path></g></svg>
+              <div>
+                <div class="text-xs font-bold mb-1">{{ statusReasonBoxTitle }}</div>
+                <p class="text-sm leading-relaxed">{{ record.remark }}</p>
+              </div>
+            </div>
+          </div>
+          <div v-else-if="record.route" class="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
             <div class="flex items-start space-x-2">
               <svg class="w-5 h-5  flex-none mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><path d="M12 2c3.196 0 6.348 1.116 8.35 3.855C22.235 8.425 23 11.268 23 14c0 6.075-11 8-11 8S1 20.075 1 14c0-2.732.765-5.575 2.65-8.145C5.652 3.116 8.804 2 12 2zm0 1.5c-2.804 0-5.598 1.009-7.35 3.395C3.015 9.144 2.5 11.615 2.5 14c0 4.325 7.51 6.25 9.223 6.484L12 20.5c1.686-.02 8.5-1.96 8.5-6.5 0-2.385-.515-4.856-2.15-7.105C16.598 4.509 13.804 3.5 12 3.5zM12 7a3.5 3.5 0 1 1 0 7a3.5 3.5 0 0 1 0-7zm0 1.5a2 2 0 1 0 0 4a2 2 0 0 0 0-4z" fill="currentColor"></path></g></svg>
               <div>
@@ -85,7 +117,7 @@
             <n-tab-pane name="agenda" tab="របៀបវារៈ" >
               <div class="p-4 md:p-6">
                 <div class="p-4 rounded-lg border border-default mb-6">
-                  <h3 class="font-moul text-md mb-2">កម្មវត្ថុ</h3>
+                  <h3 class="font-moul text-md mb-2">កម្មវត្ថុassda</h3>
                   <p class=" leading-relaxed">{{ record.objective || 'មិនបានកំណត់' }}</p>
                 </div>
                 <div class="flex justify-between items-center mb-4">
@@ -683,6 +715,8 @@
                     :status="legalDraft.status"
                     :regulator="legalDraft.regulator || ''"
                     :meeting-id="record.id"
+                    :legal-draft-id="legalDraft.id"
+                    :can-upload="canUploadDraft"
                     :start-with-sidebar="true"
                   />
                   <div class="mt-3 flex justify-end">
@@ -702,6 +736,32 @@
         </div>
       </div>
     </Transition>
+
+    <!-- Delay / Cancel reason -->
+    <n-modal
+      v-model:show="showStatusReasonModal"
+      preset="card"
+      :title="statusReasonModalTitle"
+      style="max-width:480px"
+      :mask-closable="false"
+    >
+      <n-form label-placement="top" size="medium">
+        <n-form-item label="មូលហេតុ" required>
+          <n-input
+            v-model:value="statusReasonForm.reason"
+            type="textarea"
+            :autosize="{ minRows: 3, maxRows: 6 }"
+            placeholder="សូមបញ្ជាក់ពីមូលហេតុ..."
+          />
+        </n-form-item>
+      </n-form>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <n-button @click="showStatusReasonModal = false">បោះបង់</n-button>
+          <n-button type="primary" :loading="savingStatusReason" @click="submitStatusReason">រក្សាទុក</n-button>
+        </div>
+      </template>
+    </n-modal>
 
     <!-- Continue meeting as the next version -->
     <n-modal
@@ -829,8 +889,8 @@
       <template #footer><div class="flex justify-end space-x-2"><n-button @click="showAgendaForm=false">បោះបង់</n-button><n-button type="primary" @click="saveAgenda" :disabled="!agendaForm.topic||!agendaForm.start_time||!agendaForm.duration">{{ editingAgendaIndex!==null?'កែប្រែ':'រក្សាទុក' }}</n-button></div></template>
     </n-modal>
 
-    <!-- Edit meeting -->
-    <update-form
+    <!-- Edit meeting (reuses the create-meeting form/component) -->
+    <create-form
       v-bind:model="model"
       v-bind:record="record"
       v-bind:show="showEditModal"
@@ -841,13 +901,13 @@
 
 <script>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
-import { useMessage, useNotification } from 'naive-ui'
+import { useMessage, useNotification, useDialog } from 'naive-ui'
 import dateFormat from 'dateformat'
 import MemberForm from '../widgets/member.vue'
 import DraftPdfSection from '../widgets/draft-pdf-section.vue'
-import UpdateForm from '../widgets/update.vue'
+import CreateForm from '../widgets/create.vue'
 
 // ─── Mock Data ──────────────────────────────────────────────────────────
 function getMockRecord() {
@@ -908,24 +968,53 @@ function getMockDraft() {
   }
 }
 
+// A continuation meeting created with a stale default time (e.g. always
+// 08:00-11:30 regardless of when "continue" is actually pressed) would show
+// up as already "finished" the instant it's read, since status is derived by
+// comparing date/start/end against the current clock — round up to the next
+// half hour instead so a fresh continuation always starts as pending.
+function roundUpToNextHalfHour(date) {
+  const d = new Date(date)
+  d.setSeconds(0, 0)
+  const remainder = d.getMinutes() % 30
+  if (remainder !== 0) d.setMinutes(d.getMinutes() + (30 - remainder))
+  return d
+}
+function defaultContinueMeetingTimes() {
+  const start = roundUpToNextHalfHour(new Date())
+  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000)
+  return {
+    date: dateFormat(start, 'yyyy-mm-dd'),
+    start: dateFormat(start, 'HH:MM'),
+    end: dateFormat(end, 'HH:MM')
+  }
+}
+
 export default {
   name:'MeetingDetailPage',
-  components: { MemberForm, DraftPdfSection, UpdateForm },
+  components: { MemberForm, DraftPdfSection, CreateForm },
   props:{model:{type:Object,required:true,default:()=>({name:'meeting',title:'កិច្ចប្រជុំ'})}},
   setup(props){
-    const store=useStore();const route=useRoute();const message=useMessage();const notify=useNotification()
+    const store=useStore();const route=useRoute();const router=useRouter();const message=useMessage();const notify=useNotification();const dialog=useDialog()
     const record=ref(null);const loading=ref(true);const error=ref(false)
     const showEditModal = ref(false)
     const isLocalMeeting = ref(false)
+    // ─── Status delay/cancel reason dialog ─────────────────────────────────
+    const showStatusReasonModal = ref(false)
+    const statusReasonMode = ref('delay') // 'delay' | 'cancel'
+    const savingStatusReason = ref(false)
+    const statusReasonForm = reactive({ reason: '' })
+    const statusReasonModalTitle = computed(() => ({
+      delay: 'ពន្យាពេលកិច្ចប្រជុំ',
+      cancel: 'បោះបង់កិច្ចប្រជុំ'
+    }[statusReasonMode.value] || 'ប្ដូរស្ថានភាព'))
     const showContinueMeetingModal = ref(false)
     const savingContinuedMeeting = ref(false)
     const continueMeetingFormRef = ref(null)
     const continueMeetingForm = reactive({
       objective: '',
       type_id: null,
-      date: dateFormat(new Date(), 'yyyy-mm-dd'),
-      start: '08:00',
-      end: '11:30',
+      ...defaultContinueMeetingTimes(),
       rooms: [],
       organizations: [],
       route: '',
@@ -1093,6 +1182,138 @@ export default {
         }).catch(() => notify.error({ title:'កំហុស', description:'បញ្ហាក្នុងពេលផ្សាយ' }))
     }
 
+    // Meeting status options for the popselect (excludes the "continue to new version" status,
+    // which is a separate workflow handled by openContinueMeetingModal)
+    const meetingStatusOptions = [
+      { label: 'មិនទាន់ប្រជុំ', value: 1 },
+      { label: 'កំពុងប្រជុំ', value: 2 },
+      { label: 'ពន្យាពេល', value: 16 },
+      { label: 'ចប់', value: 32 },
+      { label: 'បោះបង់', value: 64 }
+    ]
+    // Statuses that can be applied directly (no reason needed)
+    const meetingStatusActions = {
+      1: 'meeting/statusNew',
+      2: 'meeting/start',
+      32: 'meeting/end'
+    }
+    // Statuses that require a reason via the dialog
+    const reasonStatusModes = { 16: 'delay', 64: 'cancel' }
+
+    const hasStatusReason = computed(() => {
+      const s = Number(record.value?.status)
+      return [16, 64].includes(s) && !!record.value?.remark
+    })
+    const statusReasonBoxTitle = computed(() => ({
+      16: 'មូលហេតុពន្យាពេល',
+      64: 'មូលហេតុបោះបង់'
+    }[Number(record.value?.status)] || 'មូលហេតុ'))
+
+    // Statuses that need an explicit "are you sure?" confirmation before applying
+    const statusConfirmMessages = {
+      16: 'តើអ្នកប្រាកដជាចង់ពន្យាពេលកិច្ចប្រជុំនេះមែនទេ?',
+      64: 'តើអ្នកប្រាកដជាចង់បោះបង់កិច្ចប្រជុំនេះមែនទេ?',
+      32: 'តើអ្នកប្រាកដជាចង់បញ្ចប់កិច្ចប្រជុំនេះមែនទេ?'
+    }
+
+    function confirmStatusChange(value, onConfirm) {
+      const content = statusConfirmMessages[value]
+      if (!content) { onConfirm(); return }
+      dialog.warning({
+        title: 'បញ្ជាក់ការផ្លាស់ប្ដូរស្ថានភាព',
+        content,
+        positiveText: 'យល់ព្រម',
+        negativeText: 'បោះបង់',
+        onPositiveClick: onConfirm
+      })
+    }
+
+    function onSelectMeetingStatus(value, record) {
+      if (Number(record.status) === value) return
+
+      if (reasonStatusModes[value]) {
+        statusReasonMode.value = reasonStatusModes[value]
+        statusReasonForm.reason = ''
+        showStatusReasonModal.value = true
+        return
+      }
+
+      const action = meetingStatusActions[value]
+      if (!action) return
+
+      confirmStatusChange(value, () => applyDirectStatusChange(value, action, record))
+    }
+
+    function applyDirectStatusChange(value, action, record) {
+      if (isLocalMeeting.value || record.is_continuation_draft) {
+        record.status = value
+        message.success('បានប្ដូរស្ថានភាពប្រជុំ')
+        return
+      }
+
+      const previous = record.status
+      record.status = value
+      store.dispatch(action, { id: record.id })
+        .then(res => {
+          if (res.data?.ok) {
+            if (res.data.record?.status !== undefined) record.status = res.data.record.status
+            message.success('បានប្ដូរស្ថានភាពប្រជុំ')
+          } else {
+            record.status = previous
+            notify.error({ title:'កំហុស', description:'មិនអាចប្ដូរស្ថានភាពបានទេ' })
+          }
+        }).catch(() => {
+          record.status = previous
+          notify.error({ title:'កំហុស', description:'បញ្ហាក្នុងពេលប្ដូរស្ថានភាព' })
+        })
+    }
+
+    function submitStatusReason() {
+      if (!statusReasonForm.reason?.trim()) {
+        notify.warning({ title: 'ពិនិត្យព័ត៌មាន', description: 'សូមបញ្ជាក់ពីមូលហេតុ', duration: 3000 })
+        return
+      }
+
+      const targetStatus = { delay: 16, cancel: 64 }[statusReasonMode.value]
+      confirmStatusChange(targetStatus, () => applyStatusReason())
+    }
+
+    function applyStatusReason() {
+      savingStatusReason.value = true
+
+      const actionMap = { delay: 'meeting/statusDelay', cancel: 'meeting/statusCancel' }
+      const statusValueMap = { delay: 16, cancel: 64 }
+      const action = actionMap[statusReasonMode.value]
+      const targetStatus = statusValueMap[statusReasonMode.value]
+
+      const applyLocally = () => {
+        record.value.status = targetStatus
+        record.value.remark = statusReasonForm.reason
+      }
+
+      if (isLocalMeeting.value || record.value.is_continuation_draft) {
+        applyLocally()
+        savingStatusReason.value = false
+        message.success('បានប្ដូរស្ថានភាពប្រជុំ')
+        showStatusReasonModal.value = false
+        return
+      }
+
+      store.dispatch(action, { id: record.value.id, reason: statusReasonForm.reason }).then(res => {
+        savingStatusReason.value = false
+        if (res.data?.ok) {
+          applyLocally()
+          message.success('បានប្ដូរស្ថានភាពប្រជុំ')
+          showStatusReasonModal.value = false
+        } else {
+          notify.error({ title: 'កំហុស', description: 'មិនអាចប្ដូរស្ថានភាពបានទេ' })
+        }
+      }).catch(() => {
+        savingStatusReason.value = false
+        notify.error({ title: 'កំហុស', description: 'បញ្ហាក្នុងពេលប្ដូរស្ថានភាព' })
+      })
+    }
+
     function normalizeLookupRecords(response, getterName) {
       const records = response?.data?.records
       if (Array.isArray(records)) return records
@@ -1124,12 +1345,14 @@ export default {
     }
 
     function openContinueMeetingModal() {
+      if (!canContinueMeeting.value) {
+        notify.warning({ title:'មិនអាចបន្តកិច្ចប្រជុំបានទេ', description:'កិច្ចប្រជុំត្រូវស្ថិតក្នុងស្ថានភាព ពន្យាពេល ឬ ចប់ សិន ទើបអាចបន្តទៅកំណែថ្មីបាន។' })
+        return
+      }
       Object.assign(continueMeetingForm, {
         objective: '',
         type_id: null,
-        date: dateFormat(new Date(), 'yyyy-mm-dd'),
-        start: '08:00',
-        end: '11:30',
+        ...defaultContinueMeetingTimes(),
         rooms: [],
         organizations: [],
         route: '',
@@ -1153,76 +1376,114 @@ export default {
         return
       }
       savingContinuedMeeting.value = true
-      continueMeeting()
-      savingContinuedMeeting.value = false
-      showContinueMeetingModal.value = false
+      try {
+        await continueMeeting()
+      } finally {
+        savingContinuedMeeting.value = false
+      }
     }
 
-    function continueMeeting() {
+    // Continuing a meeting creates a REAL new meeting row (pid = this meeting's id),
+    // reusing the same legal draft — see MeetingController::create(). The only
+    // client-only fallback left is isLocalMeeting (offline/demo mode, nothing to save to).
+    async function continueMeeting() {
       if (!record.value) return
-      const previous = record.value
-      const nextVersion = meetingVersion.value + 1
-      const draftTitle = legalDraft.value?.title || 'សេចក្តីព្រាង'
 
-      record.value = {
-        id: previous.id,
-        parent_meeting_id: previous.id,
-        meeting_version: nextVersion,
-        is_continuation_draft: true,
-        objective: continueMeetingForm.objective.trim(),
-        date: continueMeetingForm.date,
-        start: continueMeetingForm.start,
-        end: continueMeetingForm.end,
-        status: 1,
-        active: 0,
-        summary: continueMeetingForm.summary || '',
-        route: continueMeetingForm.route || '',
-        contact_info: '',
-        type: continueMeetingForm.type_id
-          ? {
-              id: continueMeetingForm.type_id,
-              name: continueTypeOptions.value.find(item => item.value === continueMeetingForm.type_id)?.label || ''
-            }
-          : null,
-        type_id: continueMeetingForm.type_id,
-        rooms: continueMeetingForm.rooms.map(id => ({
-          id,
-          name: continueRoomOptions.value.find(item => item.value === id)?.label || ''
-        })),
-        organizations: continueMeetingForm.organizations.map(id => ({
-          id,
-          name: continueOrganizationOptions.value.find(item => item.value === id)?.label || ''
-        })),
-        agendas: [],
-        listMembers: [],
-        members: [],
-        minister_preeng: [],
-        seichdey_preeng: [],
-        tech_reports: [],
-        reports: [],
-        other_documents: []
+      if (isLocalMeeting.value || record.value.is_continuation_draft) {
+        const nextVersion = meetingVersion.value + 1
+        const draftTitle = legalDraft.value?.title || 'សេចក្តីព្រាង'
+        record.value = {
+          id: record.value.id,
+          parent_meeting_id: record.value.id,
+          meeting_version: nextVersion,
+          is_continuation_draft: true,
+          objective: continueMeetingForm.objective.trim(),
+          date: continueMeetingForm.date,
+          start: continueMeetingForm.start,
+          end: continueMeetingForm.end,
+          status: 1,
+          active: 0,
+          summary: continueMeetingForm.summary || '',
+          route: continueMeetingForm.route || '',
+          contact_info: '',
+          type: continueMeetingForm.type_id
+            ? {
+                id: continueMeetingForm.type_id,
+                name: continueTypeOptions.value.find(item => item.value === continueMeetingForm.type_id)?.label || ''
+              }
+            : null,
+          type_id: continueMeetingForm.type_id,
+          rooms: continueMeetingForm.rooms.map(id => ({
+            id,
+            name: continueRoomOptions.value.find(item => item.value === id)?.label || ''
+          })),
+          organizations: continueMeetingForm.organizations.map(id => ({
+            id,
+            name: continueOrganizationOptions.value.find(item => item.value === id)?.label || ''
+          })),
+          agendas: [],
+          listMembers: [],
+          members: [],
+          minister_preeng: [],
+          seichdey_preeng: [],
+          tech_reports: [],
+          reports: [],
+          other_documents: []
+        }
+        agendas.value = []
+        roomSeats.value = []
+        seatAssignments.value = []
+        preChecklist.value = []
+        postChecklist.value = []
+        Object.keys(docSections).forEach(key => {
+          docSections[key].files = []
+          docSections[key].pdfSrc = null
+        })
+        legalDraft.value = {
+          id: legalDraft.value?.id || null,
+          title: draftTitle,
+          status: 'progressing',
+          version_number: nextVersion,
+          regulator: legalDraft.value?.regulator || '',
+          pdf_url: '',
+          docx_url: ''
+        }
+        legalDraftPdfUrl.value = ''
+        showContinueMeetingModal.value = false
+        message.success(`បានបន្តកិច្ចប្រជុំទៅកំណែទី ${nextVersion}`)
+        return
       }
-      agendas.value = []
-      roomSeats.value = []
-      seatAssignments.value = []
-      preChecklist.value = []
-      postChecklist.value = []
-      Object.keys(docSections).forEach(key => {
-        docSections[key].files = []
-        docSections[key].pdfSrc = null
-      })
-      legalDraft.value = {
-        id: legalDraft.value?.id || null,
-        title: draftTitle,
-        status: 'progressing',
-        version_number: nextVersion,
-        regulator: legalDraft.value?.regulator || '',
-        pdf_url: '',
-        docx_url: ''
+
+      try {
+        const res = await store.dispatch('meeting/create', {
+          pid: record.value.id,
+          objective: continueMeetingForm.objective.trim(),
+          date: continueMeetingForm.date,
+          start: continueMeetingForm.start,
+          end: continueMeetingForm.end,
+          type_id: continueMeetingForm.type_id,
+          contact_info: '',
+          route: continueMeetingForm.route || '',
+          summary: continueMeetingForm.summary || '',
+          organizations: continueMeetingForm.organizations
+        })
+        if (!res.data?.ok || !res.data?.record?.id) {
+          notify.error({ title: 'បន្តកិច្ចប្រជុំ', description: 'មិនអាចបន្តកិច្ចប្រជុំបានទេ។', duration: 3000 })
+          return
+        }
+        const newMeetingId = res.data.record.id
+        if (Array.isArray(continueMeetingForm.rooms) && continueMeetingForm.rooms.length) {
+          await Promise.allSettled(continueMeetingForm.rooms.map(roomId =>
+            store.dispatch('meeting/toggleMeetingRoom', { room: { id: roomId }, meeting: { id: newMeetingId } })
+          ))
+        }
+        showContinueMeetingModal.value = false
+        message.success('បានបន្តកិច្ចប្រជុំទៅកំណែថ្មី')
+        router.push({ name: 'MeetingDetail', params: { id: newMeetingId } })
+      } catch (e) {
+        console.error(e)
+        notify.error({ title: 'បន្តកិច្ចប្រជុំ', description: 'មានបញ្ហាក្នុងពេលបន្តកិច្ចប្រជុំ។', duration: 3000 })
       }
-      legalDraftPdfUrl.value = ''
-      isLocalMeeting.value = true
-      message.success(`បានបន្តកិច្ចប្រជុំទៅកំណែទី ${nextVersion}`)
     }
     function formatDate(d){if(!d)return'— — —';try{const dt=new Date(d);if(isNaN(dt.getTime()))return d;return dateFormat(dt,'dd-mm-yyyy')}catch(e){return d}}
 
@@ -1239,15 +1500,31 @@ export default {
     const agendaForm=reactive({topic:'',start_time:'',duration:30,handlerIds:[]})
     const totalDuration=computed(()=>agendas.value.reduce((s,i)=>s+(parseInt(i.duration)||0),0))
     function formatDuration(m){const mins=parseInt(m)||0;const h=Math.floor(mins/60);const r=mins%60;if(h>0&&r>0)return`${h} ម៉ោង ${r} នាទី`;if(h>0)return`${h} ម៉ោង`;return`${r} នាទី`}
+    // The agenda "អ្នកទទួលបន្ទុក" (presenter) select is backed by the real
+    // people directory from the backend (GET /people via meetingPeople/list —
+    // the same endpoint the member-search sidebar uses), not just this
+    // meeting's already-invited members, so it never shows empty just because
+    // no one has been invited to the meeting yet.
+    const allPeople=ref([])
+    function loadAllPeople(){
+      store.dispatch('meetingPeople/list',{search:'',perPage:1000,page:1}).then(res=>{
+        allPeople.value=Array.isArray(res.data?.records)?res.data.records:[]
+      }).catch(()=>{allPeople.value=[]})
+    }
     const availableHandlers=computed(()=>{
-      let list = []
-      if(record.value&&record.value.listMembers) list = record.value.listMembers
-      else if(record.value&&record.value.members) list = record.value.members
-      if(!list||!list.length) return []
-      return list.filter(m=>m.member||(m.firstname)).map(m=>{
-        const member = m.member || m
-        const n=(member.lastname||'')+' '+(member.firstname||'')
-        return{label:n.trim()+' ('+groupLabel(m.group||'audient')+')',value:member.id,member,group:m.group||'audient'}
+      if(!allPeople.value||!allPeople.value.length) return []
+      const memberGroupById={}
+      const list=record.value&&(record.value.listMembers||record.value.members)
+      if(Array.isArray(list)){
+        list.forEach(m=>{
+          const member=m.member||m
+          if(member&&member.id) memberGroupById[member.id]=m.group||null
+        })
+      }
+      return allPeople.value.map(p=>{
+        const n=(p.lastname||'')+' '+(p.firstname||'')
+        const group=memberGroupById[p.id]
+        return{label:n.trim()+(group?' ('+groupLabel(group)+')':''),value:p.id,member:p,group:group||null}
       })
     })
     function openAddAgenda(){editingAgendaIndex.value=null;agendaForm.topic='';agendaForm.start_time='';agendaForm.duration=30;agendaForm.handlerIds=[];showAgendaForm.value=true}
@@ -1639,9 +1916,10 @@ export default {
         4:{label:'នៅបន្ត',type:'info'},
         8:{label:'ប្ដូរ',type:'warning'},
         16:{label:'ពន្យាពេល',type:'error'},
-        32:{label:'ចប់',type:'success'}
+        32:{label:'ចប់',type:'success'},
+        64:{label:'បោះបង់',type:'error'}
       }
-      return statuses[Number(record.value?.status)]||{label:'មិនបានកំណត់ស្ថានភាព',type:'default'}
+      return statuses[Number(record.value?.status)]||statuses[1]
     })
     const meetingStatusLabel=computed(()=>meetingStatus.value.label)
     const meetingStatusType=computed(()=>meetingStatus.value.type)
@@ -1652,8 +1930,29 @@ export default {
       const s=Number(record.value.status)
       return s!==32
     })
+    // Re-uploading the draft PDF/DOCX is only allowed before the meeting is
+    // published (ផ្សាយ) and before it's finished — once either happens, the
+    // uploaded document is considered final.
+    const canUploadDraft=computed(()=>{
+      if(!record.value) return true
+      const notPublished=parseInt(record.value.active)===0
+      const notFinished=Number(record.value.status)!==32
+      return notPublished&&notFinished
+    })
+    // Continuing to a new version only makes sense once the current meeting has
+    // wrapped up: either delayed (to resume later) or finished.
+    const canContinueMeeting=computed(()=>{
+      if(!record.value) return false
+      return [16,32].includes(Number(record.value.status))
+    })
     function hydrateDraft(){
-      legalDraft.value=getMockDraft()
+      if(record.value?.legalDraft){
+        legalDraft.value=record.value.legalDraft
+      }else if(isLocalMeeting.value){
+        legalDraft.value=getMockDraft()
+      }else{
+        legalDraft.value=null
+      }
       legalDraftPdfUrl.value=(legalDraft.value&&legalDraft.value.pdf_url&&legalDraft.value.pdf_url!=='#')
         ? legalDraft.value.pdf_url
         : ''
@@ -1787,17 +2086,20 @@ export default {
         hydrateAgendas();hydrateReferences();hydrateDraft();hydrateChecklists();fetchRoomSeats();loading.value=false
       }).catch(err=>{console.error(err);notify.error({title:'អានទិន្នន័យ',description:'មានបញ្ហាក្នុងពេលអានទិន្នន័យកិច្ចប្រជុំ។',duration:3000});record.value=getMockRecord();isLocalMeeting.value=true;hydrateAgendas();hydrateReferences();hydrateDraft();hydrateChecklists();fetchRoomSeats();error.value=false;loading.value=false})
     }
-    onMounted(()=>{fetchMeeting()})
+    onMounted(()=>{fetchMeeting();loadAllPeople()})
     watch(()=>route.params.id,()=>{fetchMeeting()})
 
-    return{record,loading,error,togglePublish,openContinueMeetingModal,saveContinuedMeeting,meetingVersion,meetingStatusLabel,meetingStatusType,formatDate,meetingLeaders,roleLabel,roleClass,groupLabel,groupClass,
+    return{record,loading,error,togglePublish,meetingStatusOptions,onSelectMeetingStatus,
+      hasStatusReason,statusReasonBoxTitle,
+      showStatusReasonModal,statusReasonMode,statusReasonModalTitle,statusReasonForm,savingStatusReason,submitStatusReason,
+      openContinueMeetingModal,saveContinuedMeeting,meetingVersion,meetingStatusLabel,meetingStatusType,formatDate,meetingLeaders,roleLabel,roleClass,groupLabel,groupClass,
       showEditModal, closeEditModal,
       showContinueMeetingModal,savingContinuedMeeting,continueMeetingFormRef,continueMeetingForm,continueMeetingRules,continueTypeOptions,continueRoomOptions,continueOrganizationOptions,
       agendas,showAgendaForm,editingAgendaIndex,agendaForm,totalDuration,formatDuration,availableHandlers,openAddAgenda,openEditAgenda,saveAgenda,removeAgenda,
       roomSeats,seatLoading,headTableSeats,leftSideSeats,rightSideSeats,audienceSeats,audienceCols,seatColorClass,seatBadgeClass,roleBorderClass,roleRingClass,roleTextClass,roleBadgeClass,
       showSeatPicker,memberSearchQuery,filteredAvailableMembers,handleSeatClick,assignMemberToSeat,roleLabel,memberPanelWidth,startResizePanel,inlineMemberSearch,inlineSearchResults,newPerson,showAddPersonForm,countesyOptions,positionOptions,organizationOptions,saveNewPerson,loadFormOptions,toggleAddForm,onSearchInput,refreshParticipantTab,addMemberToMeeting,removeMemberFromMeeting,updateMemberGroupAndRole,roleOptions,groupOptions,attendantValue,attendantLabel,attendantType,attendantOptions,updateAttendant,
       showPrintPreview,nameCardItems,groupedNameCards,handlePrint,
-      legalDraft,legalDraftPdfUrl,meetingNotStarted,canCommentOnDraft,
+      legalDraft,legalDraftPdfUrl,meetingNotStarted,canCommentOnDraft,canUploadDraft,canContinueMeeting,
       preChecklist,postChecklist,preCheckDoneCount,postCheckDoneCount,preCheckAllDone,postCheckAllDone,toggleCheck,toggleEquipStatus,
       docSections,selectDoc,uploadDoc,removeDoc,activeKey,activeIdx,activePdfSrc}
   }
