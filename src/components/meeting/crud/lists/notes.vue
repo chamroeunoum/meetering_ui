@@ -188,7 +188,7 @@ export default {
           var memberData = m.member || m
           fn = memberData.firstname || ''
           ln = memberData.lastname || ''
-          var mid2 = m.id
+          var mid2 = m.meeting_member_id || m.id
           var name = (fn || ln) ? (fn + ' ' + ln).trim() : 'មិនស្គាល់'
           var seatNum = m.seat_number || null
           return {

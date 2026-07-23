@@ -10,7 +10,7 @@
         <n-button type="primary" size="small" @click="openCreate">បន្ថែមថ្មី</n-button>
         <div class="w-3/5 md:w-2/5 relative h-8 mr-2">
           <input type="text" @keypress.enter="filterRecords" v-model="search"
-            class="bg-gray-100 dark:bg-gray-700 px-2 h-8 w-full rounded border border-default focus:border-blue-600 duration-300 text-secondary"
+            class="px-2 h-8 w-full rounded border border-default focus:border-blue-600 duration-300 text-secondary"
             placeholder="ស្វែងរកតាមឈ្មោះ លេខទូរសព្ទ អ៊ីមែល..." />
           <svg class="absolute right-1 top-1 w-6 h-6 text-muted cursor-pointer" @click="filterRecords"
             viewBox="0 0 20 20"><g fill="none"><path d="M8.5 3a5.5 5.5 0 0 1 4.227 9.02l4.127 4.126a.5.5 0 0 1-.638.765l-.07-.057l-4.126-4.127A5.5 5.5 0 1 1 8.5 3zm0 1a4.5 4.5 0 1 0 0 9a4.5 4.5 0 0 0 0-9z" fill="currentColor"/></g></svg>
