@@ -144,16 +144,30 @@ import { useNotification } from 'naive-ui'
 import dateFormat from 'dateformat'
 import Crud from '@classes/Crud.js'
 
+// A meeting created with the default (untouched) date/time must never already
+// look "finished" the moment it's saved — the backend marks a meeting
+// finished purely by comparing its date/start/end against the current clock,
+// so a hardcoded default time (e.g. always 08:00-11:30) would make anything
+// created later in the day appear finished on its very first read.
+function roundUpToNextHalfHour(date) {
+  const d = new Date(date)
+  d.setSeconds(0, 0)
+  const remainder = d.getMinutes() % 30
+  if (remainder !== 0) d.setMinutes(d.getMinutes() + (30 - remainder))
+  return d
+}
+
 function defaultForm() {
-  const now = new Date()
+  const start = roundUpToNextHalfHour(new Date())
+  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000)
   return {
     objective: '',
     summary: '',
     route: '',
     contact_info: '',
-    date: dateFormat(now, 'yyyy-mm-dd'),
-    start: '08:00',
-    end: '11:30',
+    date: dateFormat(start, 'yyyy-mm-dd'),
+    start: dateFormat(start, 'HH:MM'),
+    end: dateFormat(end, 'HH:MM'),
     type_id: null,
     organizations: [],
     rooms: []

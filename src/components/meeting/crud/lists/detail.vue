@@ -48,7 +48,21 @@
                 </template>
                 <span class="text-xs">{{ parseInt(record.active) > 0 ? 'ឈប់ផ្សាយ' : 'ផ្សាយ' }}</span>
               </n-button>
-              <n-button size="tiny" type="success" secondary @click="openContinueMeetingModal">
+              <n-tooltip v-if="!canContinueMeeting" trigger="hover">
+                <template #trigger>
+                  <n-button size="tiny" type="success" secondary disabled>
+                    <template #icon>
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14"/>
+                        <path d="m13 6 6 6-6 6"/>
+                      </svg>
+                    </template>
+                    <span class="text-xs">បន្តកិច្ចប្រជុំទៅកំណែថ្មី</span>
+                  </n-button>
+                </template>
+                កិច្ចប្រជុំត្រូវស្ថិតក្នុងស្ថានភាព ពន្យាពេល ឬ ចប់ សិន ទើបអាចបន្តទៅកំណែថ្មីបាន
+              </n-tooltip>
+              <n-button v-else size="tiny" type="success" secondary @click="openContinueMeetingModal">
                 <template #icon>
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M5 12h14"/>
@@ -702,6 +716,7 @@
                     :regulator="legalDraft.regulator || ''"
                     :meeting-id="record.id"
                     :legal-draft-id="legalDraft.id"
+                    :can-upload="canUploadDraft"
                     :start-with-sidebar="true"
                   />
                   <div class="mt-3 flex justify-end">
@@ -888,7 +903,7 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
-import { useMessage, useNotification } from 'naive-ui'
+import { useMessage, useNotification, useDialog } from 'naive-ui'
 import dateFormat from 'dateformat'
 import MemberForm from '../widgets/member.vue'
 import DraftPdfSection from '../widgets/draft-pdf-section.vue'
@@ -953,12 +968,34 @@ function getMockDraft() {
   }
 }
 
+// A continuation meeting created with a stale default time (e.g. always
+// 08:00-11:30 regardless of when "continue" is actually pressed) would show
+// up as already "finished" the instant it's read, since status is derived by
+// comparing date/start/end against the current clock — round up to the next
+// half hour instead so a fresh continuation always starts as pending.
+function roundUpToNextHalfHour(date) {
+  const d = new Date(date)
+  d.setSeconds(0, 0)
+  const remainder = d.getMinutes() % 30
+  if (remainder !== 0) d.setMinutes(d.getMinutes() + (30 - remainder))
+  return d
+}
+function defaultContinueMeetingTimes() {
+  const start = roundUpToNextHalfHour(new Date())
+  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000)
+  return {
+    date: dateFormat(start, 'yyyy-mm-dd'),
+    start: dateFormat(start, 'HH:MM'),
+    end: dateFormat(end, 'HH:MM')
+  }
+}
+
 export default {
   name:'MeetingDetailPage',
   components: { MemberForm, DraftPdfSection, CreateForm },
   props:{model:{type:Object,required:true,default:()=>({name:'meeting',title:'កិច្ចប្រជុំ'})}},
   setup(props){
-    const store=useStore();const route=useRoute();const router=useRouter();const message=useMessage();const notify=useNotification()
+    const store=useStore();const route=useRoute();const router=useRouter();const message=useMessage();const notify=useNotification();const dialog=useDialog()
     const record=ref(null);const loading=ref(true);const error=ref(false)
     const showEditModal = ref(false)
     const isLocalMeeting = ref(false)
@@ -977,9 +1014,7 @@ export default {
     const continueMeetingForm = reactive({
       objective: '',
       type_id: null,
-      date: dateFormat(new Date(), 'yyyy-mm-dd'),
-      start: '08:00',
-      end: '11:30',
+      ...defaultContinueMeetingTimes(),
       rooms: [],
       organizations: [],
       route: '',
@@ -1174,6 +1209,25 @@ export default {
       64: 'មូលហេតុបោះបង់'
     }[Number(record.value?.status)] || 'មូលហេតុ'))
 
+    // Statuses that need an explicit "are you sure?" confirmation before applying
+    const statusConfirmMessages = {
+      16: 'តើអ្នកប្រាកដជាចង់ពន្យាពេលកិច្ចប្រជុំនេះមែនទេ?',
+      64: 'តើអ្នកប្រាកដជាចង់បោះបង់កិច្ចប្រជុំនេះមែនទេ?',
+      32: 'តើអ្នកប្រាកដជាចង់បញ្ចប់កិច្ចប្រជុំនេះមែនទេ?'
+    }
+
+    function confirmStatusChange(value, onConfirm) {
+      const content = statusConfirmMessages[value]
+      if (!content) { onConfirm(); return }
+      dialog.warning({
+        title: 'បញ្ជាក់ការផ្លាស់ប្ដូរស្ថានភាព',
+        content,
+        positiveText: 'យល់ព្រម',
+        negativeText: 'បោះបង់',
+        onPositiveClick: onConfirm
+      })
+    }
+
     function onSelectMeetingStatus(value, record) {
       if (Number(record.status) === value) return
 
@@ -1187,6 +1241,10 @@ export default {
       const action = meetingStatusActions[value]
       if (!action) return
 
+      confirmStatusChange(value, () => applyDirectStatusChange(value, action, record))
+    }
+
+    function applyDirectStatusChange(value, action, record) {
       if (isLocalMeeting.value || record.is_continuation_draft) {
         record.status = value
         message.success('បានប្ដូរស្ថានភាពប្រជុំ')
@@ -1216,6 +1274,11 @@ export default {
         return
       }
 
+      const targetStatus = { delay: 16, cancel: 64 }[statusReasonMode.value]
+      confirmStatusChange(targetStatus, () => applyStatusReason())
+    }
+
+    function applyStatusReason() {
       savingStatusReason.value = true
 
       const actionMap = { delay: 'meeting/statusDelay', cancel: 'meeting/statusCancel' }
@@ -1282,12 +1345,14 @@ export default {
     }
 
     function openContinueMeetingModal() {
+      if (!canContinueMeeting.value) {
+        notify.warning({ title:'មិនអាចបន្តកិច្ចប្រជុំបានទេ', description:'កិច្ចប្រជុំត្រូវស្ថិតក្នុងស្ថានភាព ពន្យាពេល ឬ ចប់ សិន ទើបអាចបន្តទៅកំណែថ្មីបាន។' })
+        return
+      }
       Object.assign(continueMeetingForm, {
         objective: '',
         type_id: null,
-        date: dateFormat(new Date(), 'yyyy-mm-dd'),
-        start: '08:00',
-        end: '11:30',
+        ...defaultContinueMeetingTimes(),
         rooms: [],
         organizations: [],
         route: '',
@@ -1435,15 +1500,31 @@ export default {
     const agendaForm=reactive({topic:'',start_time:'',duration:30,handlerIds:[]})
     const totalDuration=computed(()=>agendas.value.reduce((s,i)=>s+(parseInt(i.duration)||0),0))
     function formatDuration(m){const mins=parseInt(m)||0;const h=Math.floor(mins/60);const r=mins%60;if(h>0&&r>0)return`${h} ម៉ោង ${r} នាទី`;if(h>0)return`${h} ម៉ោង`;return`${r} នាទី`}
+    // The agenda "អ្នកទទួលបន្ទុក" (presenter) select is backed by the real
+    // people directory from the backend (GET /people via meetingPeople/list —
+    // the same endpoint the member-search sidebar uses), not just this
+    // meeting's already-invited members, so it never shows empty just because
+    // no one has been invited to the meeting yet.
+    const allPeople=ref([])
+    function loadAllPeople(){
+      store.dispatch('meetingPeople/list',{search:'',perPage:1000,page:1}).then(res=>{
+        allPeople.value=Array.isArray(res.data?.records)?res.data.records:[]
+      }).catch(()=>{allPeople.value=[]})
+    }
     const availableHandlers=computed(()=>{
-      let list = []
-      if(record.value&&record.value.listMembers) list = record.value.listMembers
-      else if(record.value&&record.value.members) list = record.value.members
-      if(!list||!list.length) return []
-      return list.filter(m=>m.member||(m.firstname)).map(m=>{
-        const member = m.member || m
-        const n=(member.lastname||'')+' '+(member.firstname||'')
-        return{label:n.trim()+' ('+groupLabel(m.group||'audient')+')',value:member.id,member,group:m.group||'audient'}
+      if(!allPeople.value||!allPeople.value.length) return []
+      const memberGroupById={}
+      const list=record.value&&(record.value.listMembers||record.value.members)
+      if(Array.isArray(list)){
+        list.forEach(m=>{
+          const member=m.member||m
+          if(member&&member.id) memberGroupById[member.id]=m.group||null
+        })
+      }
+      return allPeople.value.map(p=>{
+        const n=(p.lastname||'')+' '+(p.firstname||'')
+        const group=memberGroupById[p.id]
+        return{label:n.trim()+(group?' ('+groupLabel(group)+')':''),value:p.id,member:p,group:group||null}
       })
     })
     function openAddAgenda(){editingAgendaIndex.value=null;agendaForm.topic='';agendaForm.start_time='';agendaForm.duration=30;agendaForm.handlerIds=[];showAgendaForm.value=true}
@@ -1849,6 +1930,21 @@ export default {
       const s=Number(record.value.status)
       return s!==32
     })
+    // Re-uploading the draft PDF/DOCX is only allowed before the meeting is
+    // published (ផ្សាយ) and before it's finished — once either happens, the
+    // uploaded document is considered final.
+    const canUploadDraft=computed(()=>{
+      if(!record.value) return true
+      const notPublished=parseInt(record.value.active)===0
+      const notFinished=Number(record.value.status)!==32
+      return notPublished&&notFinished
+    })
+    // Continuing to a new version only makes sense once the current meeting has
+    // wrapped up: either delayed (to resume later) or finished.
+    const canContinueMeeting=computed(()=>{
+      if(!record.value) return false
+      return [16,32].includes(Number(record.value.status))
+    })
     function hydrateDraft(){
       if(record.value?.legalDraft){
         legalDraft.value=record.value.legalDraft
@@ -1990,7 +2086,7 @@ export default {
         hydrateAgendas();hydrateReferences();hydrateDraft();hydrateChecklists();fetchRoomSeats();loading.value=false
       }).catch(err=>{console.error(err);notify.error({title:'អានទិន្នន័យ',description:'មានបញ្ហាក្នុងពេលអានទិន្នន័យកិច្ចប្រជុំ។',duration:3000});record.value=getMockRecord();isLocalMeeting.value=true;hydrateAgendas();hydrateReferences();hydrateDraft();hydrateChecklists();fetchRoomSeats();error.value=false;loading.value=false})
     }
-    onMounted(()=>{fetchMeeting()})
+    onMounted(()=>{fetchMeeting();loadAllPeople()})
     watch(()=>route.params.id,()=>{fetchMeeting()})
 
     return{record,loading,error,togglePublish,meetingStatusOptions,onSelectMeetingStatus,
@@ -2003,7 +2099,7 @@ export default {
       roomSeats,seatLoading,headTableSeats,leftSideSeats,rightSideSeats,audienceSeats,audienceCols,seatColorClass,seatBadgeClass,roleBorderClass,roleRingClass,roleTextClass,roleBadgeClass,
       showSeatPicker,memberSearchQuery,filteredAvailableMembers,handleSeatClick,assignMemberToSeat,roleLabel,memberPanelWidth,startResizePanel,inlineMemberSearch,inlineSearchResults,newPerson,showAddPersonForm,countesyOptions,positionOptions,organizationOptions,saveNewPerson,loadFormOptions,toggleAddForm,onSearchInput,refreshParticipantTab,addMemberToMeeting,removeMemberFromMeeting,updateMemberGroupAndRole,roleOptions,groupOptions,attendantValue,attendantLabel,attendantType,attendantOptions,updateAttendant,
       showPrintPreview,nameCardItems,groupedNameCards,handlePrint,
-      legalDraft,legalDraftPdfUrl,meetingNotStarted,canCommentOnDraft,
+      legalDraft,legalDraftPdfUrl,meetingNotStarted,canCommentOnDraft,canUploadDraft,canContinueMeeting,
       preChecklist,postChecklist,preCheckDoneCount,postCheckDoneCount,preCheckAllDone,postCheckAllDone,toggleCheck,toggleEquipStatus,
       docSections,selectDoc,uploadDoc,removeDoc,activeKey,activeIdx,activePdfSrc}
   }

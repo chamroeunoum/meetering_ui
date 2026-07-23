@@ -44,6 +44,7 @@ import meetingCountesy from './modules/meeting/countesy'
 import meetingPosition from './modules/meeting/position'
 import meetingDraftWorkspace from './modules/meeting/draft-workspace'
 import legalDraft from './modules/meeting/legaldraft'
+import meetingInvitation from './modules/meeting/invitation'
 
 const debug = process.env.NODE_ENV !== 'production'
 
@@ -85,7 +86,8 @@ export default createStore({
     meetingCountesy ,
     meetingPosition ,
     meetingDraftWorkspace,
-    legalDraft
+    legalDraft ,
+    meetingInvitation
   },
   strict: debug,
   plugins: debug ? 

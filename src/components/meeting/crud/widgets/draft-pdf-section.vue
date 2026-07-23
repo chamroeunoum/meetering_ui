@@ -30,6 +30,7 @@
         <div class="header-actions">
           <n-tag v-if="pdfSource" size="small" type="error" round>PDF</n-tag>
           <n-button size="small" @click="downloadFile">ទាញយក</n-button>
+          <n-button v-if="pdfSource && canUpload" size="small" @click="openUploadDocumentModal">ផ្ទុកជំនួសឯកសារ</n-button>
           <n-badge :value="comments.length" :max="99" :show="comments.length > 0" :offset="[-4, 4]">
             <n-button size="small" :type="showComments ? 'primary' : 'default'" @click="toggleComments">មើលមតិ PDF</n-button>
           </n-badge>
@@ -194,7 +195,7 @@
           <div v-if="!pdfSource" class="pdf-empty-wrap">
             <n-empty description="មិនទាន់មានឯកសារសេចក្តីព្រាង">
               <template #extra>
-                <div class="empty-document-actions">
+                <div v-if="canUpload" class="empty-document-actions">
                   <n-button type="info" secondary @click="openVersionDocumentModal">
                     យកឯកសារពីកំណែកិច្ចប្រជុំ
                   </n-button>
@@ -202,8 +203,11 @@
                     ផ្ទុកឯកសារថ្មី
                   </n-button>
                 </div>
-                <div class="empty-document-hint">
+                <div v-if="canUpload" class="empty-document-hint">
                   ឯកសារ PDF នឹងបង្ហាញនៅទីនេះ ហើយ DOCX នឹងរក្សាទុកជាមួយឯកសារ។
+                </div>
+                <div v-else class="empty-document-hint">
+                  មិនអាចផ្ទុកឯកសារបានទេ — កិច្ចប្រជុំនេះបានផ្សាយ ឬបានបញ្ចប់ហើយ។
                 </div>
               </template>
             </n-empty>
@@ -500,6 +504,7 @@ export default {
     regulator: { type: String, default: '' },
     meetingId: { type: [String, Number], default: '' },
     legalDraftId: { type: [String, Number], default: '' },
+    canUpload: { type: Boolean, default: true },
     startWithSidebar: { type: Boolean, default: false }
   },
   setup(props) {
